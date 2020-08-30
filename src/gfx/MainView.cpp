@@ -3,15 +3,22 @@
 #include "MainView.h"
 #include "ViewManager.h"
 
+#include "games/Crossword.h"
+
 using namespace ui;
 
-u32* buffer = nullptr;
-u64 offset = 0;
+games::CrosswordScheme scheme = games::CrosswordScheme(13, 13);
+
 
 MainView::MainView(ViewManager* gvm) : gvm(gvm)
 {
   mouse = { -1, -1 };
+
+  scheme.addDefinition(0, 0, games::Dir::Hor, "casse", "Servono per imballare");
+  scheme.addDefinition(0, 0, games::Dir::Ver, "cibo", "Cosa da mangiare");
+  scheme.buildFilled();
 }
+
 
 void MainView::render()
 {
@@ -19,55 +26,41 @@ void MainView::render()
 
   gvm->clear({ 255, 255, 255 });
 
-  int w = 22, h = 12;
-  int32_t s = 12;
+  const auto w = scheme.width(), h = scheme.height();
+  int32_t s = 14;
+  point_t margin = { 1, 1 };
 
   for (int32_t x = 0; x < w + 1; ++x)
-    gvm->line(1 + x * s, 1, 1 + x * s, 1 + h * s, { 0, 0, 0 });
+    gvm->line(margin.x + x * s, margin.y, margin.x + x * s, margin.y + h * s, { 0, 0, 0 });
 
   for (int32_t y = 0; y < h + 1; ++y)
-    gvm->line(1, 1 + y * s, 1 + w * s, 1 + y * s, { 0, 0, 0 });
+    gvm->line(margin.x, margin.y + y * s, margin.x + w * s, margin.y + y * s, { 0, 0, 0 });
 
   for (int32_t y = 0; y < h; ++y)
     for (int32_t x = 0; x < w; ++x)
-      if ((y + x) % 7 == 0 || (y % 5 == 0) || (x % 3 == 0))
+      if (scheme.isFilled(x, y))
         gvm->fillRect(1 + x * s + 2, 1 + y * s + 2, s - 3, s - 3, { 0, 0, 0 });
 
+  for (const auto& def : scheme.definitions())
+  {
+    //TODO: utf8 support
+    const auto len = def.definition.text.size();
+
+    int x = def.position.x * s + margin.x + s/2;
+    int y = def.position.y * s + margin.x + s/4;
+
+    for (int i = 0; i < len; ++i)
+    {
+      gvm->text(def.definition.text.substr(i, 1), x, y, { 0, 0, 0 }, ui::TextAlign::CENTER, 1.0f);
+
+      if (def.orientation == games::Dir::Hor)
+        x += s;
+      else
+        y += s;      
+    }
+  }
+
 }
-
-/*void MainView::render()
-{
-  auto r = gvm->renderer();
-
-  SDL_SetRenderDrawColor(r, 0, 0, 0, 255);
-  SDL_RenderClear(r);
-
-  const int32_t spacing = 10;
-  int32_t x = 6, y = 6;
-  const int32_t lines = (HEIGHT - y) / spacing;
-
-  if (!buffer)
-  {
-    FILE* in = fopen("F:/Misc/Roms/Nintendo - NES/Adventure Island 2.nes", "rb");
-    buffer = new u32[lines * 4];
-    fread(buffer, sizeof(u32), lines * 4, in);
-    fclose(in);
-  }
-
-  for (int32_t i = 0; i < lines; ++i)
-  {
-    static char sbuffer[256];
-    snprintf(sbuffer, 256, "%04x %08x %08x %08x", i * 4, buffer[i * 4], buffer[i * 4 + 1], buffer[i * 4 + 2], buffer[i * 4 + 3]);
-    gvm->text(sbuffer, x, y + i * spacing, { 255, 255, 255 }, ui::TextAlign::LEFT, 1.0f);
-  }
-
-  if (mouse.x >= 0 && mouse.x < WIDTH && mouse.y >= 0 && mouse.y < HEIGHT)
-  {
-    gvm->fillRect(mouse.x - 1, mouse.y - 1, 3, 3, { 255, 0, 0, 0 });
-  }
-
-  gvm->drawRect(0, 0, 34, HEIGHT, { 160, 160, 160, 0 });
-}*/
 
 void MainView::handleKeyboardEvent(const SDL_Event& event)
 {

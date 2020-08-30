@@ -10,6 +10,8 @@ using u8 = uint8_t;
 using u32 = uint32_t;
 using u64 = uint64_t;
 
+using s32 = int32_t;
+
 template<typename T>
 struct bit_mask
 {
@@ -48,6 +50,66 @@ struct bit_mask
 
 private:
   bit_mask<T>(utype value) : value(value) { }
+};
+
+template<typename T> struct shift_operand_size { constexpr static auto value = static_cast<T>(1); };
+
+template <typename T>
+class HeapBitSet
+{
+private:
+  static constexpr size_t BITS = sizeof(T) * 8;
+  size_t SIZE;
+  size_t stride;
+
+public:
+  T* data;
+
+  HeapBitSet() : data(nullptr), SIZE(0) { }
+  ~HeapBitSet() { delete[] data; }
+
+  HeapBitSet(const HeapBitSet&) = delete;
+  HeapBitSet& operator=(const HeapBitSet&) = delete;
+
+  void init(size_t size, size_t stride = 0)
+  {    
+    SIZE = size / BITS;
+
+    if (size % BITS)
+      ++SIZE;
+
+    data = new T[SIZE]();
+    this->stride = stride;
+  }
+
+  inline void resize(size_t size)
+  {
+    auto oldSize = SIZE;
+    auto old = data;
+
+    SIZE = size / BITS;
+
+    data = new T[SIZE]();
+
+    if (old)
+      memcpy(data, old, oldSize);
+  }
+
+  inline void clear() { std::fill(data, data + SIZE, 0); }
+  inline void fill() { std::fill(data, data + SIZE, ~0); }
+  inline void flip() { std::for_each(data, data + SIZE, [](T& t) { t = ~t; }); }
+
+  inline void set(size_t index) { data[index / BITS] |= (shift_operand_size<T>::value << (index%BITS)); }
+  inline void unset(size_t index) { data[index / BITS] &= ~(shift_operand_size<T>::value << (index%BITS)); }
+  inline bool isSet(size_t index) const { return (data[index / BITS] & (shift_operand_size<T>::value << (index%BITS))) != 0; }
+
+  inline void set(size_t x, size_t y) { set(x + y * stride); }
+  inline void unset(size_t x, size_t y) { unset(x + y * stride); }
+  inline bool isSet(size_t x, size_t y) const { return isSet(x + y * stride); }
+
+  inline void release() { delete[] data; data = nullptr; }
+
+  inline size_t size() const { return SIZE; }
 };
 
 using coord_t = int32_t;
