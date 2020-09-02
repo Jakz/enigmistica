@@ -38,5 +38,8 @@
     <ClCompile Include="..\..\..\src\gfx\MainView.cpp">
       <Filter>src\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\gfx\KeyboardView.cpp">
+      <Filter>src\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

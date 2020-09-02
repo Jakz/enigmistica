@@ -129,6 +129,17 @@ struct point_t
   };
 };
 
+struct rect_t
+{
+  point_t origin;
+  point_t size;
+};
+
+struct pointf_t
+{
+  float x, y;
+};
+
 struct size2d_t
 {
   coord_t w, h;
@@ -136,7 +147,7 @@ struct size2d_t
 
 struct color_t
 {
-  u8 r, g, b, a;
+  u8 r, g, b, a = 255;
 };
 
 using path = std::string;

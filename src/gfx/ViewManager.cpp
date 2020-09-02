@@ -5,9 +5,10 @@
 using namespace ui;
 
 ui::ViewManager::ViewManager() : SDL<ui::ViewManager, ui::ViewManager>(*this, *this), _font(nullptr),
-_mainView(new MainView(this))
+_mainView(new MainView(this)), _keyboardView(new KeyboardView(this))
 {
-  _view = _mainView;
+  change(_mainView);
+  push(_keyboardView);
 }
 
 void ui::ViewManager::deinit()
@@ -32,18 +33,21 @@ bool ui::ViewManager::loadData()
 
 void ui::ViewManager::handleKeyboardEvent(const SDL_Event& event, bool press)
 {
-  _view->handleKeyboardEvent(event);
+  if (!_stack.empty())
+    _stack.back()->handleKeyboardEvent(event);
 }
 
 void ui::ViewManager::handleMouseEvent(const SDL_Event& event)
 {
-  _view->handleMouseEvent(event);
+  if (!_stack.empty())
+    _stack.back()->handleMouseEvent(event);
 }
 
 
 void ui::ViewManager::render()
 {
-  _view->render();
+  for (auto* view : _stack)
+    view->render();
 }
 
 void ui::ViewManager::text(const std::string& text, int32_t x, int32_t y)

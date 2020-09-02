@@ -73,6 +73,9 @@ public:
   void line(int x1, int y1, int x2, int y2, color_t color);
   void clear(color_t color);
 
+  void fillRect(const rect_t& rect, color_t color) { fillRect(rect.origin.x, rect.origin.y, rect.size.w, rect.size.h, color); }
+  void drawRect(const rect_t& rect, color_t color) { drawRect(rect.origin.x, rect.origin.y, rect.size.w, rect.size.h, color); }
+
   void toggleMouseCursor(bool visible);
 
   //void slowTextBlit(TTF_Font* font, int dx, int dy, Align align, const std::string& string);
@@ -99,6 +102,8 @@ bool SDL<EventHandler, Renderer>::init()
   // SDL_WINDOW_FULLSCREEN
   _window = SDL_CreateWindow("Hexie", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH * WINDOW_SCALE, HEIGHT * WINDOW_SCALE, SDL_WINDOW_OPENGL);
   _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
+
+  SDL_SetRenderDrawBlendMode(_renderer, SDL_BLENDMODE_BLEND);
 
   if (WINDOW_SCALE != 1)
     _canvas = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, WIDTH, HEIGHT);

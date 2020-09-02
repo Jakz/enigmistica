@@ -3,11 +3,18 @@
 #include "SdlHelper.h"
 
 #include <array>
+#include <vector>
 
 namespace ui
 {
+  class ViewManager;
+  
   class View
   {
+  protected:
+    ViewManager* gvm;
+    View(ViewManager* gvm) : gvm(gvm) { }
+
   public:
     virtual void render() = 0;
     virtual void handleKeyboardEvent(const SDL_Event& event) = 0;
@@ -20,6 +27,7 @@ namespace ui
   };
 
   class MainView;
+  class KeyboardView;
 
   class ViewManager : public SDL<ViewManager, ViewManager>
   {
@@ -30,7 +38,9 @@ namespace ui
 
   private:
     MainView* _mainView;
-    view_t* _view;
+    KeyboardView* _keyboardView;
+
+    std::vector<view_t*> _stack;
 
   public:
     ViewManager();
@@ -42,6 +52,10 @@ namespace ui
     void render();
 
     void deinit();
+
+    void push(view_t* view) { _stack.push_back(view); }
+    void pop() { _stack.pop_back(); }
+    void change(view_t* view) { if (!_stack.empty()) pop(); push(view); }
 
     SDL_Texture* font() { return _font; }
 

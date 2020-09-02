@@ -53,7 +53,6 @@ namespace games
   private:
     Size _size;
     std::vector<CrosswordDefinition> _definitions;
-    HeapBitSet<uint_fast32_t> _filledCells;
 
   public:
     CrosswordScheme(s32 w, s32 h) : _size({ w, h }) { }
@@ -63,30 +62,8 @@ namespace games
       _definitions.push_back({ { text, hint }, { x, y }, dir });
     }
 
-    void buildFilled()
-    {
-      _filledCells.init(_size.w * _size.h);
-
-      for (const auto& def : _definitions)
-      {
-        auto p = def.position;
-
-        for (auto i = 0; i < def.definition.text.size(); ++i)
-        {
-          _filledCells.set(p.y * _size.w + p.x);
-          p += def.orientation;
-        }
-      }
-
-      _filledCells.flip();
-    }
-
-
     const auto& definitions() const { return _definitions; }
-    bool isFilled(coord_t x, coord_t y) const { return _filledCells.isSet(y * _size.w + x); }
     coord_t width() const { return _size.w; }
     coord_t height() const { return _size.h; }
   };
-
-
 }
