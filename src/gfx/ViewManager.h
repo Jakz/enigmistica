@@ -16,6 +16,8 @@ namespace ui
     View(ViewManager* gvm) : gvm(gvm) { }
 
   public:
+    virtual void activate(bool full = true) { }
+
     virtual void render() = 0;
     virtual void handleKeyboardEvent(const SDL_Event& event) = 0;
     virtual void handleMouseEvent(const SDL_Event& event) = 0;
@@ -53,9 +55,9 @@ namespace ui
 
     void deinit();
 
-    void push(view_t* view) { _stack.push_back(view); }
+    void push(view_t* view) { _stack.push_back(view); view->activate(false); }
     void pop() { _stack.pop_back(); }
-    void change(view_t* view) { if (!_stack.empty()) pop(); push(view); }
+    void change(view_t* view) { if (!_stack.empty()) pop(); push(view); view->activate(); }
 
     SDL_Texture* font() { return _font; }
 

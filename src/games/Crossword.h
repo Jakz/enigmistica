@@ -13,8 +13,8 @@ namespace games
 
   struct WordDefinition
   {
-    std::string text;
-    std::string hint;
+    utf8_string text;
+    utf8_string hint;
   };
 
   using coord_t = ::coord_t;
@@ -57,7 +57,7 @@ namespace games
   public:
     CrosswordScheme(s32 w, s32 h) : _size({ w, h }) { }
 
-    void addDefinition(s32 x, s32 y, Dir dir, const std::string& text, const std::string& hint)
+    void addDefinition(s32 x, s32 y, Dir dir, const utf8_string& text, const utf8_string& hint)
     {
       _definitions.push_back({ { text, hint }, { x, y }, dir });
     }

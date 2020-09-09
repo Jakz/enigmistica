@@ -71,7 +71,6 @@ MainView::MainView(ViewManager* gvm) : View(gvm), margin({ 1, 1 }), cs(14)
   schemeStatus.update(&scheme);
 }
 
-
 void MainView::render()
 {
   auto r = gvm->renderer();
@@ -94,7 +93,7 @@ void MainView::render()
       if (status.status == gfx::Status::Blocked)
         gvm->fillRect(1 + x * cs + 2, 1 + y * cs + 2, cs - 3, cs - 3, { 40, 40, 40, 255 });
       else if (status.status == gfx::Status::Normal)
-        gvm->text(std::string("") + status.text, x * cs + cs/2 + 1, y * cs + cs/4 + 1, { 0, 0, 0 }, ui::TextAlign::CENTER, 1.0f);
+        gvm->text(utf8_string("") + status.text, x * cs + cs/2 + 1, y * cs + cs/4 + 1, { 0, 0, 0 }, ui::TextAlign::CENTER, 1.0f);
     }
 
   if (mouse.x != -1)

@@ -25,9 +25,20 @@ namespace ui
   class KeyboardView : public View
   {
   private:
+    enum ButtonState { Normal, Hover };
+    
+    utf8_string value;
+
+    point_t selected;
+
+    void drawKeyButton(utf8_char character, point_t position, ButtonState state);
+
+    point_t characterForCoordinate(point_t position);
 
   public:
     KeyboardView(ViewManager* gvm);
+
+    void activate(bool full) override;
 
     void render() override;
     void handleKeyboardEvent(const SDL_Event& event) override;

@@ -12,6 +12,9 @@ using u64 = uint64_t;
 
 using s32 = int32_t;
 
+using utf8_string = std::string;
+using utf8_char = std::string::value_type;
+
 template<typename T>
 struct bit_mask
 {
@@ -129,12 +132,6 @@ struct point_t
   };
 };
 
-struct rect_t
-{
-  point_t origin;
-  point_t size;
-};
-
 struct pointf_t
 {
   float x, y;
@@ -143,6 +140,12 @@ struct pointf_t
 struct size2d_t
 {
   coord_t w, h;
+};
+
+struct rect_t
+{
+  point_t origin;
+  size2d_t size;
 };
 
 struct color_t
