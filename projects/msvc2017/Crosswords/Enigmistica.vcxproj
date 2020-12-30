@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\Common.h" />
+    <ClInclude Include="..\..\..\src\games\Chess.h" />
     <ClInclude Include="..\..\..\src\games\Crossword.h" />
     <ClInclude Include="..\..\..\src\gfx\MainView.h" />
     <ClInclude Include="..\..\..\src\gfx\SdlHelper.h" />
@@ -29,6 +30,8 @@
     <ClCompile Include="..\..\..\src\gfx\KeyboardView.cpp" />
     <ClCompile Include="..\..\..\src\gfx\MainView.cpp" />
     <ClCompile Include="..\..\..\src\gfx\ViewManager.cpp" />
+    <ClCompile Include="..\..\..\src\gfx\views\ChessView.cpp" />
+    <ClCompile Include="..\..\..\src\gfx\views\CrosswordView.cpp" />
     <ClCompile Include="..\..\..\src\main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

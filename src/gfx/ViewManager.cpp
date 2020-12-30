@@ -8,7 +8,7 @@ ui::ViewManager::ViewManager() : SDL<ui::ViewManager, ui::ViewManager>(*this, *t
 _mainView(new MainView(this)), _keyboardView(new KeyboardView(this))
 {
   change(_mainView);
-  push(_keyboardView);
+  //push(_keyboardView);
 }
 
 void ui::ViewManager::deinit()

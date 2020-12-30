@@ -23,7 +23,7 @@ namespace games
 
   enum class Dir { Hor, Ver };
 
-  Position operator+(const Position& position, Dir dir)
+  inline Position operator+(const Position& position, Dir dir)
   {
     if (dir == Dir::Hor)
       return { position.x + 1, position.y };
@@ -31,7 +31,7 @@ namespace games
       return { position.x, position.y + 1 };
   }
 
-  Position& operator+=(Position& position, Dir dir)
+  inline Position& operator+=(Position& position, Dir dir)
   {
     if (dir == Dir::Hor)
       ++position.x;

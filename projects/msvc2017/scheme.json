@@ -1,0 +1,12 @@
+"data": {
+  "type": "crossword",
+  "size": [13, 13],
+  "language": "it",
+  "definitions":
+  [
+    [0, 0, "hor", "casse", "Servono per imballare"],
+    [6, 0, "hor", "iago", "Desta la gelosia di Otello"],
+
+    [0, 0, "ver", "cibo", "Cosa da mangiare"]
+  ]
+}

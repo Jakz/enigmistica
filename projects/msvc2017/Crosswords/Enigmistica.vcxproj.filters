@@ -10,6 +10,9 @@
     <Filter Include="src\games">
       <UniqueIdentifier>{a2d3ba54-7191-408a-a5fe-7b5793dbcd03}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\gfx\views">
+      <UniqueIdentifier>{66684eae-9d66-40c3-812a-27657e6c97be}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\Common.h">
@@ -27,6 +30,9 @@
     <ClInclude Include="..\..\..\src\games\Crossword.h">
       <Filter>src\games</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\games\Chess.h">
+      <Filter>src\games</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\main.cpp">
@@ -40,6 +46,12 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\gfx\KeyboardView.cpp">
       <Filter>src\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\gfx\views\CrosswordView.cpp">
+      <Filter>src\gfx\views</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\gfx\views\ChessView.cpp">
+      <Filter>src\gfx\views</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

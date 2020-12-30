@@ -71,6 +71,7 @@ public:
   void drawRect(int x, int y, int w, int h, color_t color);
   void fillRect(int x, int y, int w, int h, color_t color);
   void line(int x1, int y1, int x2, int y2, color_t color);
+  void grid(int x1, int x2, int rows, int columns, size2d_t size, color_t color);
   void clear(color_t color);
 
   void fillRect(const rect_t& rect, color_t color) { fillRect(rect.origin.x, rect.origin.y, rect.size.w, rect.size.h, color); }
@@ -268,6 +269,18 @@ inline void SDL<EventHandler, Renderer>::clear(color_t color)
 {
   SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, 255);
   SDL_RenderClear(_renderer);
+}
+
+template<typename EventHandler, typename Renderer>
+inline void SDL<EventHandler, Renderer>::grid(int x, int y, int rows, int columns, size2d_t size, color_t color)
+{  
+  auto width = size.w * columns, height = size.h * rows;
+
+  for (auto i = 0; i < rows + 1; ++i)
+    line(x, y + i * size.h, x + width, y + i * size.h, color);
+
+  for (auto i = 0; i < columns + 1; ++i)
+    line(x + i * size.w, y, x + i * size.w, y + height, color);
 }
 
 template<typename EventHandler, typename Renderer>

@@ -3,16 +3,19 @@
 #include "ViewManager.h"
 #include "Common.h"
 
-struct ObjectGfx;
-
 namespace ui
 {
+  class GameRenderer
+  {
+  public:
+    virtual void render(ViewManager* gvm) = 0;
+    virtual void mouseMoved(point_t p) = 0;
+  };
+  
   class MainView : public View
   {
   private:
-    point_t mouse;
-    point_t margin;
-    coord_t cs; // cell size
+    GameRenderer* renderer;
 
   public:
     MainView(ViewManager* gvm);
