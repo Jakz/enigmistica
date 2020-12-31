@@ -47,6 +47,8 @@ namespace ui
   public:
     ViewManager();
 
+    SDL_Texture* loadTexture(const std::string& path);
+
     bool loadData();
 
     void handleKeyboardEvent(const SDL_Event& event, bool press);

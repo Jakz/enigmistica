@@ -20,15 +20,22 @@ void ui::ViewManager::deinit()
 
 bool ui::ViewManager::loadData()
 {
-  SDL_Surface* font = IMG_Load("font.png");
-  assert(font);
-
-  _font = SDL_CreateTextureFromSurface(_renderer, font);
-
-  SDL_SetTextureBlendMode(_font, SDL_BLENDMODE_BLEND);
-  SDL_FreeSurface(font);
+  _font = loadTexture("font.png");
 
   return true;
+}
+
+SDL_Texture* ui::ViewManager::loadTexture(const std::string& path)
+{
+  SDL_Surface* surface = IMG_Load(path.c_str());
+  assert(surface);
+
+  SDL_Texture* texture = SDL_CreateTextureFromSurface(_renderer, surface);
+
+  SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+  SDL_FreeSurface(surface);
+
+  return texture;
 }
 
 void ui::ViewManager::handleKeyboardEvent(const SDL_Event& event, bool press)

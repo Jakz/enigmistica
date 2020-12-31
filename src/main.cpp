@@ -22,6 +22,6 @@ int main(int argc, char* argv[])
 
   //loader.load("1level.l");
 
-  getchar();
+  //getchar();
   return 0;
 }

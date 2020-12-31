@@ -2,30 +2,83 @@
 
 #include "Common.h"
 
+#include <array>
+
 namespace games
 {
+  template<coord_t W, coord_t H, typename T>
+  class Board
+  {
+  protected:
+    std::array<T, W*H> board;
+
+  public:
+    T& get(coord_t x, coord_t y) { return board[x + y * W]; }
+    const T& get(coord_t x, coord_t y) const { return board[x + y * W]; }
+
+    auto width() const { return W; }
+    auto height() const { return H; }
+
+    auto firstRow() const { return 0; }
+    auto lastRow() const { return H - 1; }
+
+    auto firstColumn() const { return 0; }
+    auto lastColumn() const { return W - 1; }
+
+    static constexpr coord_t WIDTH = W;
+    static constexpr coord_t HEIGHT = H;
+  };
+  
+  
   namespace chess
   {
-    enum class Piece
+
+
+    struct Piece
     {
-      Pawn, Rook, Bishop, Castle, Queen, King
+      enum class Type
+      {
+        Pawn, Rook, Bishop, Castle, Queen, King
+      };
+
+      enum class Color { White, Black };
+
+      bool present;
+      Type type;
+      Color color;
     };
     
-    struct BoardCell
+    class Board : public games::Board<8, 8, Piece>
     {
-      Piece piece;
-    };
-
-    class Board
-    {
-    public:
-      static constexpr coord_t WIDTH = 8;
-      static constexpr coord_t HEIGHT = 8;
-
     private:
 
     public:
-      Board();
+      Board()
+      {
+        reset();
+      }
+
+      void reset()
+      {
+        std::array<Piece::Type, 8> row = {
+          Piece::Type::Castle, Piece::Type::Rook, Piece::Type::Bishop, Piece::Type::Queen,
+          Piece::Type::King, Piece::Type::Bishop, Piece::Type::Rook, Piece::Type::Castle
+        };
+
+
+        std::fill(board.begin(), board.end(), Piece{ false, Piece::Type::Pawn, Piece::Color::White });
+
+        for (auto i = 0; i < row.size(); ++i)
+        {
+          get(i, firstRow()) = { true, row[i], Piece::Color::White };
+          get(i, firstRow() + 1) = { true, Piece::Type::Pawn, Piece::Color::White };
+
+          get(i, lastRow()) = { true, row[i], Piece::Color::Black };
+          get(i, lastRow() - 1) = { true, Piece::Type::Pawn, Piece::Color::Black };
+        }
+      }
+
+
     };
   }
 }
