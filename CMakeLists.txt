@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5.0)
 
-project (ababisme)
+project (enigmistica)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/projects/cmake")
 
@@ -33,12 +33,12 @@ include_directories(${SDL2_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIR} ${ZLIB_INCLUDE
 set(SRC_ROOT "${CMAKE_SOURCE_DIR}/src")
 
 file(GLOB SOURCES_ROOT "${SRC_ROOT}/*.cpp")
-file(GLOB SOURCES_VIEWS "${SRC_ROOT}/game/*.cpp")
-file(GLOB SOURCES_IO "${SRC_ROOT}/gfx/*.cpp")
-file(GLOB SOURCES_VM "${SRC_ROOT}/io/*.cpp")
+file(GLOB SOURCES_GFX "${SRC_ROOT}/gfx/*.cpp")
+file(GLOB SOURCES_VIEWS "${SRC_ROOT}/gfx/views/*.cpp")
+file(GLOB SOURCES_GAMES "${SRC_ROOT}/games/*.cpp")
 
-set(SOURCES ${SOURCES_ROOT} ${SOURCES_VIEWS} ${SOURCES_IO} ${SOURCES_VM} ${SOURCES_LUA})
+set(SOURCES ${SOURCES_ROOT} ${SOURCES_VIEWS} ${SOURCES_GFX} ${SOURCES_GAMES})
 
-add_executable(abab ${SOURCES})
+add_executable(enigmistica ${SOURCES})
 
-target_link_libraries(abab ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES} ${ZLIB_LIBRARIES})
+target_link_libraries(enigmistica ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES} ${ZLIB_LIBRARIES})

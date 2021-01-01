@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Games
+Name=Enigmistica
+Comment=Board Games
+Terminal=false
+StartupNotify=true
+Exec=enigmistica %f
+Icon=icon
+Categories=games;
