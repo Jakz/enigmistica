@@ -121,10 +121,9 @@ struct point_t
 {
   coord_t x, y;
 
-  bool operator==(const point_t& o) const
-  {
-    return x == o.x && y == o.y;
-  }
+  bool operator==(const point_t& o) const { return x == o.x && y == o.y; }
+
+  point_t operator+(coord_t d) const { return { x + d, y + d }; }
 
   struct hash
   {
@@ -146,6 +145,11 @@ struct rect_t
 {
   point_t origin;
   size2d_t size;
+
+  auto x() const { return origin.x; }
+  auto y() const { return origin.y; }
+  auto w() const { return size.w; }
+  auto h() const { return size.h; }
 };
 
 struct color_t

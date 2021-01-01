@@ -43,4 +43,12 @@ void MainView::handleMouseEvent(const SDL_Event& event)
     //mouse.x = event.motion.x;
     //mouse.y = event.motion.y;
   }
+  else if (event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN)
+  {
+    auto bt = event.button.button;
+    
+    if (renderer)
+      //TODO: add other buttons
+      renderer->mouseButton({ event.button.x, event.button.y }, ui::MouseButton::Left, event.type == SDL_MOUSEBUTTONDOWN);
+  }
 }

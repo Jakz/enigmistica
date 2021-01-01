@@ -7,38 +7,87 @@
 
 using namespace ui;
 
+struct ChessPieceRenderer
+{
+  SDL_Texture* pieces;
+
+  ChessPieceRenderer() : pieces(nullptr) { }
+
+  void render(ViewManager* gvm, point_t p, const games::chess::Piece& piece)
+  {
+    if (!pieces)
+      pieces = gvm->loadTexture("chess.png");
+
+    using Piece = games::chess::Piece;
+
+    const coord_t size = 16;
+    rect_t rect = { 0, 0, size, size };
+
+    switch (piece.type) {
+      case Piece::Type::Pawn: rect.origin.x = 0; break;
+      case Piece::Type::Castle: rect.origin.x = 1; break;
+      case Piece::Type::Rook: rect.origin.x = 2; break;
+      case Piece::Type::Bishop: rect.origin.x = 3; break;
+      case Piece::Type::Queen: rect.origin.x = 4; break;
+      case Piece::Type::King: rect.origin.x = 5; break;
+    }
+
+    switch (piece.color) {
+      case Piece::Color::White: rect.origin.y = 0; break;
+      case Piece::Color::Black: rect.origin.y = 1; break;
+    }
+
+    rect.origin.x *= size;
+    rect.origin.y *= size;
+
+    gvm->blit(pieces, rect, p.x - size / 2, p.y - size / 2);
+  }
+};
 
 class ChessRenderer : public GameRenderer
 {
+  using T = games::chess::Piece;
+  using Renderer = ChessPieceRenderer;
+
 private:
-  point_t cellHover;
+
+  games::chess::Board board;
+
+  Renderer pieceRenderer;
+
+  struct
+  {
+    bool valid;
+    point_t position;
+    point_t cell;
+  } mouse;
+
   point_t margin;
   coord_t cs; // cell size
 
-  SDL_Texture* pieces;
+  T heldPiece;
 
 public:
   ChessRenderer();
 
   void render(ViewManager* gvm) override;
   void mouseMoved(point_t p) override;
+  void mouseButton(point_t p, MouseButton button, bool pressed) override;
 };
+
+
 
 GameRenderer* irenderer = new ChessRenderer();
 
-games::chess::Board board;
 
-
-ChessRenderer::ChessRenderer() : GameRenderer(), margin({ 12, 24 }), cs(24), pieces(nullptr)
+ChessRenderer::ChessRenderer() : GameRenderer(), margin({ 12, 24 }), cs(24), mouse({ false, { 0,0}, { 0, 0} })
 {
-  cellHover = { -1, -1 };
 
 }
 
 void ChessRenderer::render(ViewManager* gvm)
 {
-  if (!pieces)
-    pieces = gvm->loadTexture("chess.png");
+
   
   constexpr auto BW = games::chess::Board::WIDTH;
   constexpr auto BH = games::chess::Board::HEIGHT;
@@ -69,36 +118,21 @@ void ChessRenderer::render(ViewManager* gvm)
       if ((y + x) % 2 == 1)
         gvm->fillRect({ base.x + 1, base.y + 1, cs - 1, cs - 1 }, { 80, 80, 80 });
 
+      if (mouse.cell == point_t{ x, y })
+        gvm->drawRect({ base.x + 1, base.y + 1, cs - 1, cs - 1 }, { 220, 0, 0 });
+
       const auto& cell = board.get(x, y);
-
-      using Piece = games::chess::Piece;
-
-      const coord_t size = 16;
-      SDL_Rect rect = { 0, 0, size, size };
 
       if (cell.present)
       {
-        switch (cell.type) {
-          case Piece::Type::Pawn: rect.x = 0; break;
-          case Piece::Type::Castle: rect.x = 1; break;
-          case Piece::Type::Rook: rect.x = 2; break;
-          case Piece::Type::Bishop: rect.x = 3; break;
-          case Piece::Type::Queen: rect.x = 4; break;
-          case Piece::Type::King: rect.x = 5; break;
-        }
-
-        switch (cell.color) {
-          case Piece::Color::White: rect.y = 0; break;
-          case Piece::Color::Black: rect.y = 1; break;
-        }
-
-        rect.x *= size;
-        rect.y *= size;
-
-        gvm->blit(pieces, rect, base.x + cs/2 - size/2, base.y + cs/2 - size/2);
+        pieceRenderer.render(gvm, base + cs / 2, cell);
       }
     }
 
+  if (heldPiece.present)
+  {
+    pieceRenderer.render(gvm, mouse.position, heldPiece);
+  }
 }
 
 void ChessRenderer::mouseMoved(point_t p)
@@ -107,8 +141,25 @@ void ChessRenderer::mouseMoved(point_t p)
 
   if (p.x >= margin.x && p.y >= margin.y && x >= 0 && x < games::chess::Board::WIDTH && y >= 0 && y < games::chess::Board::HEIGHT)
   {
-    cellHover = { x, y };
+    mouse.cell = { x, y };
+    mouse.valid = true;
   }
   else
-    cellHover = { -1, -1 };
+  {
+    mouse.cell = { -1, -1 };
+    mouse.valid = false;
+  }
+
+  mouse.position = p;
+}
+
+
+void ChessRenderer::mouseButton(point_t p, MouseButton button, bool pressed)
+{
+  if (pressed && button == MouseButton::Left && mouse.valid && !heldPiece.present)
+  {
+    auto& cell = board.get(mouse.cell.x,  mouse.cell.y);
+    heldPiece = cell;
+    cell = T();
+  }
 }

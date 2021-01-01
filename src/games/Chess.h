@@ -27,6 +27,8 @@ namespace games
 
     static constexpr coord_t WIDTH = W;
     static constexpr coord_t HEIGHT = H;
+
+    using piece_t = T;
   };
   
   
@@ -46,6 +48,9 @@ namespace games
       bool present;
       Type type;
       Color color;
+
+      Piece() : present(false) { }
+      Piece(Type type, Color color) : present(true), type(type), color(color) { }
     };
     
     class Board : public games::Board<8, 8, Piece>
@@ -66,15 +71,15 @@ namespace games
         };
 
 
-        std::fill(board.begin(), board.end(), Piece{ false, Piece::Type::Pawn, Piece::Color::White });
+        std::fill(board.begin(), board.end(), Piece{});
 
         for (auto i = 0; i < row.size(); ++i)
         {
-          get(i, firstRow()) = { true, row[i], Piece::Color::White };
-          get(i, firstRow() + 1) = { true, Piece::Type::Pawn, Piece::Color::White };
+          get(i, firstRow()) = { row[i], Piece::Color::White };
+          get(i, firstRow() + 1) = { Piece::Type::Pawn, Piece::Color::White };
 
-          get(i, lastRow()) = { true, row[i], Piece::Color::Black };
-          get(i, lastRow() - 1) = { true, Piece::Type::Pawn, Piece::Color::Black };
+          get(i, lastRow()) = { row[i], Piece::Color::Black };
+          get(i, lastRow() - 1) = { Piece::Type::Pawn, Piece::Color::Black };
         }
       }
 

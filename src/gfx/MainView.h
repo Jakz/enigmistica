@@ -5,11 +5,14 @@
 
 namespace ui
 {
+  enum MouseButton { Left, Middle, Right };
+  
   class GameRenderer
   {
   public:
     virtual void render(ViewManager* gvm) = 0;
     virtual void mouseMoved(point_t p) = 0;
+    virtual void mouseButton(point_t p, MouseButton button, bool pressed) { }
   };
   
   class MainView : public View
