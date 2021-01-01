@@ -51,7 +51,7 @@ class ChessRenderer : public GameRenderer
 
 private:
 
-  games::chess::Board board;
+  games::chess::Chess game;
 
   Renderer pieceRenderer;
 
@@ -62,10 +62,15 @@ private:
     point_t cell;
   } mouse;
 
+  struct
+  {
+    bool present;
+    point_t from;
+    T piece;
+  } held;
+
   point_t margin;
   coord_t cs; // cell size
-
-  T heldPiece;
 
 public:
   ChessRenderer();
@@ -80,17 +85,17 @@ public:
 GameRenderer* irenderer = new ChessRenderer();
 
 
-ChessRenderer::ChessRenderer() : GameRenderer(), margin({ 12, 24 }), cs(24), mouse({ false, { 0,0}, { 0, 0} })
+ChessRenderer::ChessRenderer() : GameRenderer(), margin({ 12, 24 }), cs(24), mouse({ false, { 0,0}, { 0, 0} }), held({ false })
 {
-
+  game.resetBoard();
 }
 
 void ChessRenderer::render(ViewManager* gvm)
 {
 
   
-  constexpr auto BW = games::chess::Board::WIDTH;
-  constexpr auto BH = games::chess::Board::HEIGHT;
+  constexpr auto BW = games::chess::Chess::Board::WIDTH;
+  constexpr auto BH = games::chess::Chess::Board::HEIGHT;
 
   gvm->clear({ 255, 255, 255 });
   gvm->grid(margin.x, margin.y, BW, BH, { cs, cs }, { 0, 0, 0 });
@@ -121,7 +126,7 @@ void ChessRenderer::render(ViewManager* gvm)
       if (mouse.cell == point_t{ x, y })
         gvm->drawRect({ base.x + 1, base.y + 1, cs - 1, cs - 1 }, { 220, 0, 0 });
 
-      const auto& cell = board.get(x, y);
+      const auto& cell = game.get({ x, y });
 
       if (cell.present)
       {
@@ -129,9 +134,9 @@ void ChessRenderer::render(ViewManager* gvm)
       }
     }
 
-  if (heldPiece.present)
+  if (held.present)
   {
-    pieceRenderer.render(gvm, mouse.position, heldPiece);
+    pieceRenderer.render(gvm, mouse.position, held.piece);
   }
 }
 
@@ -139,7 +144,7 @@ void ChessRenderer::mouseMoved(point_t p)
 {
   auto x = (p.x - margin.x) / cs, y = (p.y - margin.y) / cs;
 
-  if (p.x >= margin.x && p.y >= margin.y && x >= 0 && x < games::chess::Board::WIDTH && y >= 0 && y < games::chess::Board::HEIGHT)
+  if (p.x >= margin.x && p.y >= margin.y && x >= 0 && x < games::chess::Chess::Board::WIDTH && y >= 0 && y < games::chess::Chess::Board::HEIGHT)
   {
     mouse.cell = { x, y };
     mouse.valid = true;
@@ -156,10 +161,24 @@ void ChessRenderer::mouseMoved(point_t p)
 
 void ChessRenderer::mouseButton(point_t p, MouseButton button, bool pressed)
 {
-  if (pressed && button == MouseButton::Left && mouse.valid && !heldPiece.present)
+  if (pressed && button == MouseButton::Left && mouse.valid)
   {
-    auto& cell = board.get(mouse.cell.x,  mouse.cell.y);
-    heldPiece = cell;
-    cell = T();
+    if (!held.present)
+    {
+      auto& cell = game.get(mouse.cell);
+
+      held = { true, mouse.cell, cell };
+      cell = T();
+    }
+    else
+    {
+      if (game.pieceMoved(held.piece, held.from, mouse.cell))
+      {
+        held.present = false;
+        held.piece = T();
+      }
+
+    }
+
   }
 }
