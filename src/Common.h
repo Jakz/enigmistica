@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <algorithm>
 #include <string>
 
 #define LOGD(x, ...) printf(x "\n", __VA_ARGS__)
@@ -75,7 +76,7 @@ public:
   HeapBitSet& operator=(const HeapBitSet&) = delete;
 
   void init(size_t size, size_t stride = 0)
-  {    
+  {
     SIZE = size / BITS;
 
     if (size % BITS)
@@ -155,16 +156,18 @@ struct rect_t
   rect_t(const point_t& origin, const size2d_t& size) : origin(origin), size(size) { }
   rect_t(coord_t x, coord_t y, coord_t w, coord_t h) : origin(x, y), size(w, h) { }
 
-  auto x() const { return origin.x; }
-  auto y() const { return origin.y; }
-  auto w() const { return size.w; }
-  auto h() const { return size.h; }
+  coord_t x() const { return origin.x; }
+  coord_t y() const { return origin.y; }
+  coord_t w() const { return size.w; }
+  coord_t h() const { return size.h; }
 };
 
 struct color_t
 {
-  u8 r, g, b, a = 255;
+  u8 r, g, b, a;
+
+  color_t(u8 r, u8 g, u8 b) : color_t(r, g, b, 255) { }
+  color_t(u8 r, u8 g, u8 b, u8 a) : r(r), g(g), b(b), a(a) { }
 };
 
 using path = std::string;
-

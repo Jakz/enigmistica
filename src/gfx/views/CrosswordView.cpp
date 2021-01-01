@@ -1,5 +1,3 @@
-#pragma once
-
 #include "gfx/MainView.h"
 #include "gfx/ViewManager.h"
 
@@ -19,7 +17,7 @@ namespace gfx
 
     CellStatus() : text('\0'), status(Status::Blocked) { }
   };
-  
+
   class CrosswordGfxStatus
   {
   private:

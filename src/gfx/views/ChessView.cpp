@@ -1,5 +1,3 @@
-#pragma once
-
 #include "gfx/MainView.h"
 #include "gfx/ViewManager.h"
 
@@ -95,7 +93,7 @@ ChessRenderer::ChessRenderer() : GameRenderer(), margin({ 12, 24 }), cs(24), mou
 void ChessRenderer::render(ViewManager* gvm)
 {
 
-  
+
   constexpr auto BW = games::chess::Chess::Board::WIDTH;
   constexpr auto BH = games::chess::Chess::Board::HEIGHT;
 
@@ -122,16 +120,16 @@ void ChessRenderer::render(ViewManager* gvm)
     {
       point_t base = point_t(margin.x + x * cs, margin.y + y * cs);
       const auto coord = point_t(x, y);
-      
+
       if ((y + x) % 2 == 1)
-        gvm->fillRect({base.x + 1, base.y + 1, cs - 1, cs - 1 }, { 80, 80, 80 });
+        gvm->fillRect({base.x + 1, base.y + 1, cs - 1, cs - 1 }, color_t{ 80, 80, 80 });
 
       if (mouse.cell == coord)
-        gvm->drawRect({ base.x + 1, base.y + 1, cs - 1, cs - 1 }, { 220, 0, 0 });
+        gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 220, 0, 0 });
       else if (availableMoves.find(coord) != availableMoves.end())
-        gvm->drawRect({ base.x + 1, base.y + 1, cs - 1, cs - 1 }, { 0, 220, 0 });
+        gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 0, 220, 0 });
       else if (held.present && held.from == coord)
-        gvm->drawRect({ base.x + 1, base.y + 1, cs - 1, cs - 1 }, { 220, 220, 0 });
+        gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 220, 220, 0 });
 
       const auto& cell = game.get({ x, y });
 
@@ -171,7 +169,7 @@ void ChessRenderer::mouseButton(point_t p, MouseButton button, bool pressed)
   if (pressed && button == MouseButton::Left && mouse.valid)
   {
     if (!held.present)
-    {      
+    {
       auto& cell = game.get(mouse.cell);
 
       held = { true, mouse.cell, cell };

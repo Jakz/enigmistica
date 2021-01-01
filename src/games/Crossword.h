@@ -62,7 +62,7 @@ namespace games
       _definitions.push_back({ { text, hint }, { x, y }, dir });
     }
 
-    const auto& definitions() const { return _definitions; }
+    const std::vector<CrosswordDefinition>& definitions() const { return _definitions; }
     coord_t width() const { return _size.w; }
     coord_t height() const { return _size.h; }
   };

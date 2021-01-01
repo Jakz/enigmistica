@@ -12,6 +12,7 @@
 #if !_WIN32
 constexpr int32_t WIDTH = 320;
 constexpr int32_t HEIGHT = 240;
+#define WINDOW_SCALE 1
 #define MOUSE_ENABLED false
 #else
 constexpr int32_t WIDTH = 320;
@@ -274,7 +275,7 @@ inline void SDL<EventHandler, Renderer>::clear(color_t color)
 
 template<typename EventHandler, typename Renderer>
 inline void SDL<EventHandler, Renderer>::grid(int x, int y, int rows, int columns, size2d_t size, color_t color)
-{  
+{
   auto width = size.w * columns, height = size.h * rows;
 
   for (auto i = 0; i < rows + 1; ++i)

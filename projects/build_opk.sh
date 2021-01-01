@@ -1,9 +1,9 @@
 rm -rf opk
 mkdir -p opk
-cp opendingux/retro8 opk
-cp vs2017/retro8/api.lua opk
-cp ../data/default.gcw0.desktop opk
-cp ../data/pico8_font.png opk
-cp ../data/icon.png opk
-mksquashfs opk retro8.opk -all-root -noappend -no-exports -no-xattrs -no-progress > /dev/null
+cp build/enigmistica opk
+cp opendingux/default.gcw0.desktop opk
+cp opendingux/icon.png opk
+cp ../projects/msvc2017/Crosswords/chess.png opk
+cp ../projects/msvc2017/Crosswords/font.png opk
+mksquashfs opk enigmistica.opk -all-root -noappend -no-exports -no-xattrs -no-progress > /dev/null
 # rm -rf opk

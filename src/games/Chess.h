@@ -17,19 +17,19 @@ namespace games
     T& get(coord_t x, coord_t y) { return board[x + y * W]; }
     const T& get(coord_t x, coord_t y) const { return board[x + y * W]; }
 
-    auto width() const { return W; }
-    auto height() const { return H; }
+    coord_t width() const { return W; }
+    coord_t height() const { return H; }
 
-    auto firstRow() const { return 0; }
-    auto lastRow() const { return H - 1; }
+    coord_t firstRow() const { return 0; }
+    coord_t lastRow() const { return H - 1; }
 
-    auto firstColumn() const { return 0; }
-    auto lastColumn() const { return W - 1; }
+    coord_t firstColumn() const { return 0; }
+    coord_t lastColumn() const { return W - 1; }
 
-    auto begin() { return std::begin(board); }
-    auto end() { return std::end(board); }
-    auto begin() const { return std::begin(board); }
-    auto end() const { return std::end(board); }
+    typename decltype(board)::iterator begin() { return std::begin(board); }
+    typename decltype(board)::iterator end() { return std::end(board); }
+    typename decltype(board)::const_iterator begin() const { return std::begin(board); }
+    typename decltype(board)::const_iterator end() const { return std::end(board); }
 
     static constexpr coord_t WIDTH = W;
     static constexpr coord_t HEIGHT = H;
@@ -75,7 +75,7 @@ namespace games
 
 
   };
-  
+
   namespace chess
   {
     struct Piece
@@ -113,8 +113,7 @@ namespace games
           Piece::Type::King, Piece::Type::Bishop, Piece::Type::Rook, Piece::Type::Castle
         };
 
-
-        std::fill(board.begin(), board.end(), Piece{});
+        std::fill(board.begin(), board.end(), Piece());
 
         for (auto i = 0; i < row.size(); ++i)
         {
