@@ -3,6 +3,7 @@
 #include "Common.h"
 
 #include <array>
+#include <unordered_set>
 
 namespace games
 {
@@ -36,12 +37,16 @@ namespace games
     using Piece = T;
   };
 
+  using Move = point_t;
+  using MoveSet = std::unordered_set<point_t, point_t::hash>;
+
   class MoveResult
   {
   public:
     bool valid;
 
     MoveResult() : valid(true) { }
+    MoveResult(bool valid) : valid(valid) { }
 
     operator bool() const { return valid; }
   };
@@ -62,8 +67,11 @@ namespace games
     typename B::Piece& get(point_t p) { return board.get(p.x, p.y); }
     const typename B::Piece& get(point_t p) const { return board.get(p.x, p.y); }
 
+    bool isValid(point_t p) const { return p.x >= 0 && p.x < board.width() && p.y >= 0 && p.y < board.height(); }
+
     virtual void resetBoard() = 0;
     virtual MoveResult pieceMoved(const Piece& piece, point_t from, point_t to) = 0;
+    virtual MoveSet allowedMoves(const Piece& piece, point_t from) = 0;
 
 
   };
@@ -79,12 +87,17 @@ namespace games
 
       enum class Color { White, Black };
 
-      bool present;
       Type type;
       Color color;
+      bool hasMoved;
+      bool present;
 
       Piece() : present(false) { }
-      Piece(Type type, Color color) : present(true), type(type), color(color) { }
+      Piece(Type type, Color color) : hasMoved(false), present(true), type(type), color(color) { }
+
+      bool isWhite() const { return color == Color::White; }
+      bool isEmpty() const { return !present; }
+
     };
 
     class Chess : public BoardGame<games::Board<8, 8, Piece>>
@@ -115,8 +128,42 @@ namespace games
 
       MoveResult pieceMoved(const Piece& piece, point_t from, point_t to) override
       {
-        get(to) = piece;
-        return MoveResult();
+        auto moves = allowedMoves(piece, from);
+
+        //TODO: inefficient, allowedMoves called also from UI
+        if (moves.find(to) != moves.end())
+        {
+          get(to) = piece;
+          get(to).hasMoved = true;
+          return MoveResult();
+        }
+        else
+          return MoveResult(false);
+      }
+
+      MoveSet allowedMoves(const Piece& piece, point_t from) override
+      {
+        MoveSet moves;
+
+        if (piece.type == Piece::Type::Pawn)
+        {
+          coord_t dy = piece.isWhite() ? +1 : -1;
+
+          point_t next = from + point_t(0, dy);
+
+          if (isValid(next) && get(next).isEmpty())
+            moves.insert(next);
+
+          if (!piece.hasMoved)
+          {
+            point_t next2 = from + point_t(0, 2*dy);
+
+            if (isValid(next2)  && get(next).isEmpty() && get(next2).isEmpty())
+              moves.insert(next2);
+          }
+        }
+
+        return moves;
       }
     };
   }

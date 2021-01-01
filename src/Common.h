@@ -121,9 +121,13 @@ struct point_t
 {
   coord_t x, y;
 
+  point_t() : point_t(0, 0) { }
+  point_t(coord_t x, coord_t y) : x(x), y(y) { }
+
   bool operator==(const point_t& o) const { return x == o.x && y == o.y; }
 
   point_t operator+(coord_t d) const { return { x + d, y + d }; }
+  point_t operator+(const point_t& d) const { return { x + d.x, y + d.y }; }
 
   struct hash
   {
@@ -139,12 +143,17 @@ struct pointf_t
 struct size2d_t
 {
   coord_t w, h;
+
+  size2d_t(coord_t w, coord_t h) : w(w), h(h) { }
 };
 
 struct rect_t
 {
   point_t origin;
   size2d_t size;
+
+  rect_t(const point_t& origin, const size2d_t& size) : origin(origin), size(size) { }
+  rect_t(coord_t x, coord_t y, coord_t w, coord_t h) : origin(x, y), size(w, h) { }
 
   auto x() const { return origin.x; }
   auto y() const { return origin.y; }

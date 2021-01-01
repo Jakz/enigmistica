@@ -69,6 +69,8 @@ private:
     T piece;
   } held;
 
+  games::MoveSet availableMoves;
+
   point_t margin;
   coord_t cs; // cell size
 
@@ -118,13 +120,18 @@ void ChessRenderer::render(ViewManager* gvm)
   for (auto x = 0; x < BW; ++x)
     for (auto y = 0; y < BH; ++y)
     {
-      point_t base = { margin.x + x * cs, margin.y + y * cs };
+      point_t base = point_t(margin.x + x * cs, margin.y + y * cs);
+      const auto coord = point_t(x, y);
       
       if ((y + x) % 2 == 1)
-        gvm->fillRect({ base.x + 1, base.y + 1, cs - 1, cs - 1 }, { 80, 80, 80 });
+        gvm->fillRect({base.x + 1, base.y + 1, cs - 1, cs - 1 }, { 80, 80, 80 });
 
-      if (mouse.cell == point_t{ x, y })
+      if (mouse.cell == coord)
         gvm->drawRect({ base.x + 1, base.y + 1, cs - 1, cs - 1 }, { 220, 0, 0 });
+      else if (availableMoves.find(coord) != availableMoves.end())
+        gvm->drawRect({ base.x + 1, base.y + 1, cs - 1, cs - 1 }, { 0, 220, 0 });
+      else if (held.present && held.from == coord)
+        gvm->drawRect({ base.x + 1, base.y + 1, cs - 1, cs - 1 }, { 220, 220, 0 });
 
       const auto& cell = game.get({ x, y });
 
@@ -164,20 +171,31 @@ void ChessRenderer::mouseButton(point_t p, MouseButton button, bool pressed)
   if (pressed && button == MouseButton::Left && mouse.valid)
   {
     if (!held.present)
-    {
+    {      
       auto& cell = game.get(mouse.cell);
 
       held = { true, mouse.cell, cell };
+      availableMoves = game.allowedMoves(held.piece, held.from);
+
       cell = T();
     }
     else
     {
-      if (game.pieceMoved(held.piece, held.from, mouse.cell))
+      /* cancel move */
+      if (mouse.cell == held.from)
+      {
+        held.present = false;
+        game.get(held.from) = held.piece;
+        held.piece = T();
+        availableMoves.clear();
+
+      }
+      else if (game.pieceMoved(held.piece, held.from, mouse.cell))
       {
         held.present = false;
         held.piece = T();
+        availableMoves.clear();
       }
-
     }
 
   }

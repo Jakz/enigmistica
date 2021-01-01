@@ -22,7 +22,7 @@ std::array<RowSpec, 3> rows = { {
   { "zxcvbnm", { 0.10f, 0.56f } },
 } };
 
-static const rect_t bounds = { { 5, HEIGHT/2 }, { WIDTH - 10, HEIGHT/2 - 10 } };
+static const rect_t bounds = rect_t(5, HEIGHT/2 ,  WIDTH - 10, HEIGHT/2 - 10);
 static const float by = 0.1f;
 static const size2d_t s = { 14, 14 };
 static const size2d_t m = { 20, 20 };
@@ -42,7 +42,7 @@ void KeyboardView::render()
   {
     for (s32 i = 0; i < spec.characters.size(); ++i)
     {
-      point_t p = { bounds.origin.x + spec.position.x * bounds.size.w + m.w * i, bounds.origin.y + bounds.size.h * by /*spec.position.y * bounds.size.h*/ + j * m.h };
+      point_t p = point_t(bounds.origin.x + spec.position.x * bounds.size.w + m.w * i, bounds.origin.y + bounds.size.h * by /*spec.position.y * bounds.size.h*/ + j * m.h);
       drawKeyButton(spec.characters[i], p, selected == point_t{ i, j } ? ButtonState::Hover : ButtonState::Normal);
     }
     ++j;
@@ -105,7 +105,7 @@ void KeyboardView::handleMouseEvent(const SDL_Event& event)
 
 void KeyboardView::drawKeyButton(utf8_char character, point_t p, ButtonState state)
 {
-  gvm->fillRect({ p, s }, { 255, 255, 255 });
+  gvm->fillRect(rect_t(p, s), { 255, 255, 255 });
   gvm->drawRect({ p, s }, state == ButtonState::Hover ? color_t{ 255, 0, 0} : color_t{ 0, 0, 0 });
   gvm->text(std::string("") + character, p.x + s.w/2, p.y + s.h/4 - 1, { 0, 0, 0 }, ui::TextAlign::CENTER, 1.0f);
 }
