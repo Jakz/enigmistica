@@ -70,6 +70,7 @@ namespace games
     bool isValid(point_t p) const { return p.x >= 0 && p.x < board.width() && p.y >= 0 && p.y < board.height(); }
 
     virtual void resetBoard() = 0;
+    virtual bool canPickupPiece(point_t from) = 0;
     virtual MoveResult pieceMoved(const Piece& piece, point_t from, point_t to) = 0;
     virtual MoveSet allowedMoves(const Piece& piece, point_t from) = 0;
 
@@ -160,9 +161,103 @@ namespace games
             if (isValid(next2)  && get(next).isEmpty() && get(next2).isEmpty())
               moves.insert(next2);
           }
+
+          auto& c1 = get(from + point_t(-1, dy));
+          auto& c2 = get(from + point_t(+1, dy));
+
+          if (c1.present && c1.color != piece.color)
+            moves.insert(from + point_t(-1, dy));
+
+          if (c2.present && c2.color != piece.color)
+            moves.insert(from + point_t(+1, dy));
+        }
+        
+        if (piece.type == Piece::Type::Castle || piece.type == Piece::Type::Queen)
+        {
+          const std::array<point_t, 4> delta =
+          {
+            point_t(-1, 0), point_t(1, 0),
+            point_t(0, -1), point_t(0, 1)
+          };
+
+          for (const auto& d : delta)
+          {
+            point_t next = from + d;
+
+            bool wasEmpty = true;
+            while (isValid(next) && (get(next).isEmpty() || (wasEmpty && get(next).color != piece.color)))
+            {
+              wasEmpty = get(next).isEmpty();
+              moves.insert(next);
+              next += d;
+
+              if (!wasEmpty)
+                break;
+            }
+          }
+        }
+
+        if (piece.type == Piece::Type::Bishop || piece.type == Piece::Type::Queen)
+        {
+          const std::array<point_t, 4> delta =
+          {
+            point_t(-1, -1), point_t(+1, -1),
+            point_t(-1, +1), point_t(+1, +1)
+          };
+
+          for (const auto& d : delta)
+          {
+            point_t next = from + d;
+
+            bool wasEmpty = true;
+            while (isValid(next) && (get(next).isEmpty() || (wasEmpty && get(next).color != piece.color)))
+            {
+              wasEmpty = get(next).isEmpty();
+              moves.insert(next);
+              next += d;
+
+              if (!wasEmpty)
+                break;
+            }
+          }
+        }
+
+        if (piece.type == Piece::Type::King)
+        {
+          for (coord_t dx = -1; dx <= 1; ++dx)
+            for (coord_t dy = -1; dy <= 1; ++dy)
+            {
+              if (dx != 0 || dy != 0)
+              {
+                point_t next = from + point_t(dx, dy);
+                if (isValid(next) && (get(next).isEmpty() || get(next).color != piece.color))
+                  moves.insert(next);
+              }
+            }
+        }
+
+        if (piece.type == Piece::Type::Rook)
+        {
+          std::array<point_t, 8> deltas = {
+            point_t(-2, -1), point_t(-2, +1), point_t(+2, -1), point_t(+2, +1),
+            point_t(-1, -2), point_t(+1, -2), point_t(-1, +2), point_t(+1, +2)
+          };
+
+          for (const auto& delta : deltas)
+          {
+            point_t next = from + delta;
+
+            if (isValid(next) && (get(next).isEmpty() || get(next).color != piece.color))
+              moves.insert(next);
+          }
         }
 
         return moves;
+      }
+
+      bool canPickupPiece(point_t from) override
+      {
+        return isValid(from) && get(from).present;
       }
     };
   }
@@ -212,6 +307,11 @@ namespace games
       MoveSet allowedMoves(const Piece& piece, point_t from) override
       {
         return MoveSet();
+      }
+
+      bool canPickupPiece(point_t from) override
+      {
+        return isValid(from) && get(from).present;
       }
     };
   }

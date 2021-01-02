@@ -76,4 +76,4 @@ struct CheckersPieceRenderer
 using CheckersRenderer = BoardGameRenderer<games::checkers::Game, CheckersPieceRenderer>;
 
 
-GameRenderer* irenderer = new CheckersRenderer();
+GameRenderer* irenderer = new ChessRenderer();

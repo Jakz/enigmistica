@@ -130,6 +130,9 @@ struct point_t
   point_t operator+(coord_t d) const { return { x + d, y + d }; }
   point_t operator+(const point_t& d) const { return { x + d.x, y + d.y }; }
 
+  point_t& operator+=(const point_t& d) { x += d.x; y += d.y; return *this; }
+
+
   struct hash
   {
     size_t operator()(const point_t& p) const { return p.y << 16 | p.x; }

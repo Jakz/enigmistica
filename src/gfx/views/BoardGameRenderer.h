@@ -128,12 +128,14 @@ namespace ui
     {
       if (!held.present)
       {
-        auto& cell = game.get(mouse.cell);
 
-        held = { true, mouse.cell, cell };
-        availableMoves = game.allowedMoves(held.piece, held.from);
-
-        cell = T();
+        if (game.canPickupPiece(mouse.cell))
+        {
+          auto& cell = game.get(mouse.cell);
+          held = { true, mouse.cell, cell };
+          availableMoves = game.allowedMoves(held.piece, held.from);
+          cell = T();
+        }
       }
       else
       {
