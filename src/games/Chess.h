@@ -4,9 +4,12 @@
 
 #include <array>
 #include <unordered_set>
+#include <unordered_map>
 
 namespace games
 {
+  enum class Color { White, Black };
+  
   template<coord_t W, coord_t H, typename T>
   class Board
   {
@@ -37,8 +40,16 @@ namespace games
     using Piece = T;
   };
 
+  struct Player
+  {
+    Color color;
+
+    Player(Color color) : color(color) { }
+  };
+
   using Move = point_t;
   using MoveSet = std::unordered_set<point_t, point_t::hash>;
+  using PlayerMoveSet = std::unordered_map<point_t, MoveSet, point_t::hash>;
 
   class MoveResult
   {
@@ -73,7 +84,25 @@ namespace games
     virtual bool canPickupPiece(point_t from) = 0;
     virtual MoveResult pieceMoved(const Piece& piece, point_t from, point_t to) = 0;
     virtual MoveSet allowedMoves(const Piece& piece, point_t from) = 0;
-
+    
+    virtual PlayerMoveSet allowedMoveSetForPlayer(const Player& player)
+    {
+      PlayerMoveSet set;
+      
+      for (int y = 0; y < board.height(); ++y)
+        for (int x = 0; x < board.width(); ++x)
+        {
+          auto coord = point_t(x, y);
+          if (get(coord) == player.color)
+          {
+            auto&& moves = allowedMoves(get(coord), coord);
+            if (!moves.empty())
+              set[coord] = moves;
+          }
+        }
+      
+      return set;
+    }
 
   };
 
@@ -86,7 +115,6 @@ namespace games
         Pawn, Rook, Bishop, Castle, Queen, King
       };
 
-      enum class Color { White, Black };
 
       Type type;
       Color color;
@@ -98,6 +126,8 @@ namespace games
 
       bool isWhite() const { return color == Color::White; }
       bool isEmpty() const { return !present; }
+
+      bool operator==(Color color) const { return present && this->color == color; }
 
     };
 
@@ -118,11 +148,11 @@ namespace games
 
         for (auto i = 0; i < row.size(); ++i)
         {
-          board.get(i, board.firstRow()) = { row[i], Piece::Color::White };
-          board.get(i, board.firstRow() + 1) = { Piece::Type::Pawn, Piece::Color::White };
+          board.get(i, board.firstRow()) = { row[i], Color::White };
+          board.get(i, board.firstRow() + 1) = { Piece::Type::Pawn, Color::White };
 
-          board.get(i, board.lastRow()) = { row[i], Piece::Color::Black };
-          board.get(i, board.lastRow() - 1) = { Piece::Type::Pawn, Piece::Color::Black };
+          board.get(i, board.lastRow()) = { row[i], Color::Black };
+          board.get(i, board.lastRow() - 1) = { Piece::Type::Pawn, Color::Black };
         }
       }
 
@@ -267,7 +297,6 @@ namespace games
     struct Piece
     {
       enum class Type { Men, King };
-      enum class Color { White, Black};
       
       bool present;
       Type type;
@@ -275,6 +304,8 @@ namespace games
 
       Piece() : present(false) { }
       Piece(Type type, Color color) : type(type), color(color) { }
+
+      bool operator==(Color color) const { return present && this->color == color; }
     };
     
     class Game : public BoardGame<Board<8, 8, Piece>>
@@ -294,7 +325,7 @@ namespace games
           
           for (; x < board.width(); x += 2)
           {
-            get(point_t(x, y)) = Piece(Piece::Type::Men, y < board.height() / 2 ? Piece::Color::White : Piece::Color::Black);
+            get(point_t(x, y)) = Piece(Piece::Type::Men, y < board.height() / 2 ? Color::White : Color::Black);
           }
         }
       }

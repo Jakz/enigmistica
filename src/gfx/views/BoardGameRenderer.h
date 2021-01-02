@@ -30,6 +30,7 @@ namespace ui
     } held;
 
     games::MoveSet availableMoves;
+    games::PlayerMoveSet availableMovesForPlayer;
 
     point_t margin;
     coord_t cs; // cell size
@@ -46,6 +47,7 @@ namespace ui
   BoardGameRenderer<T, Renderer>::BoardGameRenderer() : GameRenderer(), margin({ 12, 24 }), cs(24), mouse({ false, { 0,0}, { 0, 0} }), held({ false })
   {
     game.resetBoard();
+    availableMovesForPlayer = game.allowedMoveSetForPlayer({ games::Color::White });
   }
 
   template<typename T, typename Renderer>
@@ -81,19 +83,22 @@ namespace ui
         if ((y + x) % 2 == 1)
           gvm->fillRect({ base.x + 1, base.y + 1, cs - 1, cs - 1 }, color_t{ 80, 80, 80 });
 
-        if (mouse.cell == coord)
-          gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 220, 0, 0 });
-        else if (availableMoves.find(coord) != availableMoves.end())
+
+        if (availableMoves.find(coord) != availableMoves.end())
           gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 0, 220, 0 });
         else if (held.present && held.from == coord)
           gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 220, 220, 0 });
+        if (!held.present && availableMovesForPlayer.find(coord) != availableMovesForPlayer.end())
+          gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 0, 220, 0 });
+
+        
+        if (mouse.cell == coord)
+          gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 220, 0, 0 });
 
         const auto& cell = game.get(coord);
 
         if (cell.present)
-        {
           pieceRenderer.render(gvm, base + cs / 2, cell);
-        }
       }
 
     if (held.present)

@@ -32,8 +32,8 @@ struct ChessPieceRenderer
     }
 
     switch (piece.color) {
-      case Piece::Color::White: rect.origin.y = 0; break;
-      case Piece::Color::Black: rect.origin.y = 1; break;
+      case games::Color::White: rect.origin.y = 0; break;
+      case games::Color::Black: rect.origin.y = 1; break;
     }
 
     rect.origin.x *= size;
@@ -66,7 +66,7 @@ struct CheckersPieceRenderer
     if (piece.type == Piece::Type::King)
       rect.origin.x += size;
     
-    if (piece.color == Piece::Color::Black)
+    if (piece.color == games::Color::Black)
       rect.origin.y += size;
 
     gvm->blit(pieces, rect, p.x - size / 2, p.y - size / 2);
