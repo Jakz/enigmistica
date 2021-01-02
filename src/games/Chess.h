@@ -166,4 +166,53 @@ namespace games
       }
     };
   }
+
+  namespace checkers
+  {
+    struct Piece
+    {
+      enum class Type { Men, King };
+      enum class Color { White, Black};
+      
+      bool present;
+      Type type;
+      Color color;
+
+      Piece() : present(false) { }
+      Piece(Type type, Color color) : type(type), color(color) { }
+    };
+    
+    class Game : public BoardGame<Board<8, 8, Piece>>
+    {
+    public:
+
+      void resetBoard() override
+      {
+        std::fill(board.begin(), board.end(), Piece());
+
+        for (coord_t y = 0; y < board.height(); ++y)
+        {
+          if (y == 3 || y == 4)
+            continue;
+
+          coord_t x = (y == 1 || y == 5 || y == 7) ? 1 : 0;
+          
+          for (; x < board.width(); x += 2)
+          {
+            get(point_t(x, y)) = Piece(Piece::Type::Men, y < board.height() / 2 ? Piece::Color::White : Piece::Color::Black);
+          }
+        }
+      }
+
+      MoveResult pieceMoved(const Piece& piece, point_t from, point_t to) override
+      {
+        return MoveResult();
+      }
+
+      MoveSet allowedMoves(const Piece& piece, point_t from) override
+      {
+        return MoveSet();
+      }
+    };
+  }
 }

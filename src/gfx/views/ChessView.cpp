@@ -1,6 +1,7 @@
 #include "gfx/MainView.h"
 #include "gfx/ViewManager.h"
 
+#include "BoardGameRenderer.h"
 #include "games/Chess.h"
 
 using namespace ui;
@@ -42,159 +43,37 @@ struct ChessPieceRenderer
   }
 };
 
-class ChessRenderer : public GameRenderer
+using ChessRenderer = BoardGameRenderer<games::chess::Chess, ChessPieceRenderer>;
+
+
+
+struct CheckersPieceRenderer
 {
-  using T = games::chess::Piece;
-  using Renderer = ChessPieceRenderer;
+  SDL_Texture* pieces;
 
-private:
+  CheckersPieceRenderer() : pieces(nullptr) { }
 
-  games::chess::Chess game;
-
-  Renderer pieceRenderer;
-
-  struct
+  void render(ViewManager* gvm, point_t p, const games::checkers::Piece& piece)
   {
-    bool valid;
-    point_t position;
-    point_t cell;
-  } mouse;
+    if (!pieces)
+      pieces = gvm->loadTexture("checkers.png");
 
-  struct
-  {
-    bool present;
-    point_t from;
-    T piece;
-  } held;
+    using Piece = games::checkers::Piece;
 
-  games::MoveSet availableMoves;
+    const coord_t size = 16;
+    rect_t rect = rect_t(0, 0, size, size);
 
-  point_t margin;
-  coord_t cs; // cell size
+    if (piece.type == Piece::Type::King)
+      rect.origin.x += size;
+    
+    if (piece.color == Piece::Color::Black)
+      rect.origin.y += size;
 
-public:
-  ChessRenderer();
-
-  void render(ViewManager* gvm) override;
-  void mouseMoved(point_t p) override;
-  void mouseButton(point_t p, MouseButton button, bool pressed) override;
+    gvm->blit(pieces, rect, p.x - size / 2, p.y - size / 2);
+  }
 };
 
+using CheckersRenderer = BoardGameRenderer<games::checkers::Game, CheckersPieceRenderer>;
 
 
-GameRenderer* irenderer = new ChessRenderer();
-
-
-ChessRenderer::ChessRenderer() : GameRenderer(), margin({ 12, 24 }), cs(24), mouse({ false, { 0,0}, { 0, 0} }), held({ false })
-{
-  game.resetBoard();
-}
-
-void ChessRenderer::render(ViewManager* gvm)
-{
-
-
-  constexpr auto BW = games::chess::Chess::Board::WIDTH;
-  constexpr auto BH = games::chess::Chess::Board::HEIGHT;
-
-  gvm->clear({ 255, 255, 255 });
-  gvm->grid(margin.x, margin.y, BW, BH, { cs, cs }, { 0, 0, 0 });
-
-  static std::string ranks[] = { "1", "2", "3", "4", "5", "6", "7", "8" };
-  static std::string files[] = { "a", "b", "c", "d", "e", "f", "g", "h" };
-
-  for (auto i = 0; i < BW; ++i)
-  {
-    gvm->text(files[i], margin.x + cs / 2 + (cs * i) + 1, margin.y - 10, { 180, 180, 180 }, TextAlign::CENTER, 1.0f);
-    gvm->text(files[i], margin.x + cs / 2 + (cs * i) + 1, margin.y + cs * BH + 4, { 180, 180, 180 }, TextAlign::CENTER, 1.0f);
-  }
-
-  for (auto i = 0; i < BH; ++i)
-  {
-    gvm->text(ranks[i], margin.x - 6, margin.y + cs / 2 + (cs * i) - 2, { 180, 180, 180 }, TextAlign::CENTER, 1.0f);
-    gvm->text(ranks[i], margin.x + cs * BW + 7, margin.y + cs / 2 + (cs * i) - 2, { 180, 180, 180 }, TextAlign::CENTER, 1.0f);
-  }
-
-  for (auto x = 0; x < BW; ++x)
-    for (auto y = 0; y < BH; ++y)
-    {
-      point_t base = point_t(margin.x + x * cs, margin.y + y * cs);
-      const auto coord = point_t(x, y);
-
-      if ((y + x) % 2 == 1)
-        gvm->fillRect({base.x + 1, base.y + 1, cs - 1, cs - 1 }, color_t{ 80, 80, 80 });
-
-      if (mouse.cell == coord)
-        gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 220, 0, 0 });
-      else if (availableMoves.find(coord) != availableMoves.end())
-        gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 0, 220, 0 });
-      else if (held.present && held.from == coord)
-        gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 220, 220, 0 });
-
-      const auto& cell = game.get({ x, y });
-
-      if (cell.present)
-      {
-        pieceRenderer.render(gvm, base + cs / 2, cell);
-      }
-    }
-
-  if (held.present)
-  {
-    pieceRenderer.render(gvm, mouse.position, held.piece);
-  }
-}
-
-void ChessRenderer::mouseMoved(point_t p)
-{
-  auto x = (p.x - margin.x) / cs, y = (p.y - margin.y) / cs;
-
-  if (p.x >= margin.x && p.y >= margin.y && x >= 0 && x < games::chess::Chess::Board::WIDTH && y >= 0 && y < games::chess::Chess::Board::HEIGHT)
-  {
-    mouse.cell = { x, y };
-    mouse.valid = true;
-  }
-  else
-  {
-    mouse.cell = { -1, -1 };
-    mouse.valid = false;
-  }
-
-  mouse.position = p;
-}
-
-
-void ChessRenderer::mouseButton(point_t p, MouseButton button, bool pressed)
-{
-  if (pressed && button == MouseButton::Left && mouse.valid)
-  {
-    if (!held.present)
-    {
-      auto& cell = game.get(mouse.cell);
-
-      held = { true, mouse.cell, cell };
-      availableMoves = game.allowedMoves(held.piece, held.from);
-
-      cell = T();
-    }
-    else
-    {
-      /* cancel move */
-      if (mouse.cell == held.from)
-      {
-        held.present = false;
-        game.get(held.from) = held.piece;
-        held.piece = T();
-        availableMoves.clear();
-
-      }
-      else if (game.pieceMoved(held.piece, held.from, mouse.cell))
-      {
-        held.present = false;
-        held.piece = T();
-        availableMoves.clear();
-      }
-    }
-
-  }
-}
+GameRenderer* irenderer = new CheckersRenderer();

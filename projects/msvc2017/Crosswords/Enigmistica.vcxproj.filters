@@ -33,6 +33,9 @@
     <ClInclude Include="..\..\..\src\games\Chess.h">
       <Filter>src\games</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\gfx\views\BoardGameRenderer.h">
+      <Filter>src\gfx\views</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\main.cpp">

@@ -25,6 +25,7 @@
     <ClInclude Include="..\..\..\src\gfx\MainView.h" />
     <ClInclude Include="..\..\..\src\gfx\SdlHelper.h" />
     <ClInclude Include="..\..\..\src\gfx\ViewManager.h" />
+    <ClInclude Include="..\..\..\src\gfx\views\BoardGameRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\gfx\KeyboardView.cpp" />
