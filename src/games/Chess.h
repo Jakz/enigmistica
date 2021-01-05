@@ -10,15 +10,15 @@ namespace games
 {
   enum class Color { White, Black };
   
-  template<coord_t W, coord_t H, typename T>
+  template<coord_t W, coord_t H, typename T, typename M>
   class Board
   {
   protected:
-    std::array<T, W*H> board;
+    std::array<T, W*H> _board;
 
   public:
-    T& get(coord_t x, coord_t y) { return board[x + y * W]; }
-    const T& get(coord_t x, coord_t y) const { return board[x + y * W]; }
+    T& get(coord_t x, coord_t y) { return _board[x + y * W]; }
+    const T& get(coord_t x, coord_t y) const { return _board[x + y * W]; }
 
     coord_t width() const { return W; }
     coord_t height() const { return H; }
@@ -29,14 +29,12 @@ namespace games
     coord_t firstColumn() const { return 0; }
     coord_t lastColumn() const { return W - 1; }
 
-    typename decltype(board)::iterator begin() { return std::begin(board); }
-    typename decltype(board)::iterator end() { return std::end(board); }
-    typename decltype(board)::const_iterator begin() const { return std::begin(board); }
-    typename decltype(board)::const_iterator end() const { return std::end(board); }
+    typename decltype(_board)::iterator begin() { return std::begin(_board); }
+    typename decltype(_board)::iterator end() { return std::end(_board); }
+    typename decltype(_board)::const_iterator begin() const { return std::begin(_board); }
+    typename decltype(_board)::const_iterator end() const { return std::end(_board); }
 
-    static constexpr coord_t WIDTH = W;
-    static constexpr coord_t HEIGHT = H;
-
+    using Move = M;
     using Piece = T;
   };
 
@@ -47,9 +45,8 @@ namespace games
     Player(Color color) : color(color) { }
   };
 
-  using Move = point_t;
-  using MoveSet = std::unordered_set<point_t, point_t::hash>;
-  using PlayerMoveSet = std::unordered_map<point_t, MoveSet, point_t::hash>;
+  template<typename M> using MoveSet = std::unordered_set<M, typename M::hash>;
+  template<typename M> using PlayerMoveSet = std::unordered_map<point_t, MoveSet<M>, point_t::hash>;
 
   class MoveResult
   {
@@ -68,29 +65,42 @@ namespace games
   public:
     using Board = B;
     using Piece = typename B::Piece;
+    using Move = typename B::Move;
 
   protected:
-    B board;
+    std::vector<Player> _players;
+    decltype(_players)::iterator _player;
+    B _board;
 
   public:
-    BoardGame() { }
+    BoardGame()
+    { 
+      _players.push_back({ Color::White });
+      _players.push_back({ Color::Black });
+      _player = _players.begin();
+    }
 
-    typename B::Piece& get(point_t p) { return board.get(p.x, p.y); }
-    const typename B::Piece& get(point_t p) const { return board.get(p.x, p.y); }
+    typename B::Piece& get(point_t p) { return _board.get(p.x, p.y); }
+    const typename B::Piece& get(point_t p) const { return _board.get(p.x, p.y); }
 
-    bool isValid(point_t p) const { return p.x >= 0 && p.x < board.width() && p.y >= 0 && p.y < board.height(); }
+    size2d_t boardSize() const { return size2d_t(_board.width(), _board.height()); }
+    bool isValid(point_t p) const { return p.x >= 0 && p.x < _board.width() && p.y >= 0 && p.y < _board.height(); }
+
+    void nextTurn() { ++_player; if (_player == _players.end()) _player = _players.begin(); }
+    const Player& currentPlayer() { return *_player; }
+    coord_t playerCount() const { return 2; }
 
     virtual void resetBoard() = 0;
     virtual bool canPickupPiece(point_t from) = 0;
-    virtual MoveResult pieceMoved(const Piece& piece, point_t from, point_t to) = 0;
-    virtual MoveSet allowedMoves(const Piece& piece, point_t from) = 0;
+    virtual MoveResult pieceMoved(const Piece& piece, const Move& move) = 0;
+    virtual MoveSet<Move> allowedMoves(const Piece& piece, point_t from) = 0;
     
-    virtual PlayerMoveSet allowedMoveSetForPlayer(const Player& player)
+    virtual PlayerMoveSet<Move> allowedMoveSetForPlayer(const Player& player)
     {
-      PlayerMoveSet set;
+      PlayerMoveSet<Move> set;
       
-      for (int y = 0; y < board.height(); ++y)
-        for (int x = 0; x < board.width(); ++x)
+      for (int y = 0; y < _board.height(); ++y)
+        for (int x = 0; x < _board.width(); ++x)
         {
           auto coord = point_t(x, y);
           if (get(coord) == player.color)
@@ -131,7 +141,26 @@ namespace games
 
     };
 
-    class Chess : public BoardGame<games::Board<8, 8, Piece>>
+    struct Move
+    {
+      enum class Type { Movement, Castling, Promotion };
+      
+      Type type;
+      point_t from;
+      point_t to;
+
+      Move(const point_t& from, const point_t& to, Type type = Type::Castling) : from(from), to(to), type(type) { }
+      bool operator==(const Move& o) const { return type == o.type && from == o.from && to == o.to; }
+
+      bool endsOn(const point_t& to) const { return this->to == to; }
+
+      struct hash
+      {
+        size_t operator()(const Move& m) const { return point_t::hash()(m.to); }
+      };
+    };
+
+    class Chess : public BoardGame<games::Board<8, 8, Piece, Move>>
     {
     protected:
 
@@ -144,36 +173,54 @@ namespace games
           Piece::Type::King, Piece::Type::Bishop, Piece::Type::Rook, Piece::Type::Castle
         };
 
-        std::fill(board.begin(), board.end(), Piece());
+        std::fill(_board.begin(), _board.end(), Piece());
 
         for (auto i = 0; i < row.size(); ++i)
         {
-          board.get(i, board.firstRow()) = { row[i], Color::White };
-          board.get(i, board.firstRow() + 1) = { Piece::Type::Pawn, Color::White };
+          _board.get(i, _board.firstRow()) = { row[i], Color::White };
+          _board.get(i, _board.firstRow() + 1) = { Piece::Type::Pawn, Color::White };
 
-          board.get(i, board.lastRow()) = { row[i], Color::Black };
-          board.get(i, board.lastRow() - 1) = { Piece::Type::Pawn, Color::Black };
+          _board.get(i, _board.lastRow()) = { row[i], Color::Black };
+          _board.get(i, _board.lastRow() - 1) = { Piece::Type::Pawn, Color::Black };
         }
       }
 
-      MoveResult pieceMoved(const Piece& piece, point_t from, point_t to) override
+      MoveResult pieceMoved(const Piece& piece, const Move& move) override
       {
-        auto moves = allowedMoves(piece, from);
+        auto moves = allowedMoves(piece, move.from);
 
         //TODO: inefficient, allowedMoves called also from UI
-        if (moves.find(to) != moves.end())
+        if (moves.find(move) != moves.end())
         {
-          get(to) = piece;
-          get(to).hasMoved = true;
+          get(move.to) = piece;
+          get(move.to).hasMoved = true;
+
+          if (move.type == Move::Type::Castling)
+          {
+            if (move.to.x == 2)
+            {
+              get({ 3, move.to.y }) = get({ _board.firstColumn(), move.to.y });
+              get({ _board.firstColumn(), move.to.y }) = Piece();
+              get({ 3, move.to.y }).hasMoved = true;
+            }
+            else if (move.to.x == 6)
+            {
+              get({ 5, move.to.y }) = get({ _board.lastColumn(), move.to.y });
+              get({ _board.lastColumn(), move.to.y }) = Piece();
+              get({ 5, move.to.y }).hasMoved = true;
+            }
+          }
+
+
           return MoveResult();
         }
         else
           return MoveResult(false);
       }
 
-      MoveSet allowedMoves(const Piece& piece, point_t from) override
+      MoveSet<Move> allowedMoves(const Piece& piece, point_t from) override
       {
-        MoveSet moves;
+        MoveSet<Move> moves;
 
         if (piece.type == Piece::Type::Pawn)
         {
@@ -182,24 +229,24 @@ namespace games
           point_t next = from + point_t(0, dy);
 
           if (isValid(next) && get(next).isEmpty())
-            moves.insert(next);
+            moves.insert(Move(from, next));
 
           if (!piece.hasMoved)
           {
             point_t next2 = from + point_t(0, 2*dy);
 
             if (isValid(next2)  && get(next).isEmpty() && get(next2).isEmpty())
-              moves.insert(next2);
+              moves.insert(Move(from, next2));
           }
 
           auto& c1 = get(from + point_t(-1, dy));
           auto& c2 = get(from + point_t(+1, dy));
 
           if (c1.present && c1.color != piece.color)
-            moves.insert(from + point_t(-1, dy));
+            moves.insert(Move(from, from + point_t(-1, dy)));
 
           if (c2.present && c2.color != piece.color)
-            moves.insert(from + point_t(+1, dy));
+            moves.insert(Move(from, from + point_t(+1, dy)));
         }
         
         if (piece.type == Piece::Type::Castle || piece.type == Piece::Type::Queen)
@@ -218,7 +265,7 @@ namespace games
             while (isValid(next) && (get(next).isEmpty() || (wasEmpty && get(next).color != piece.color)))
             {
               wasEmpty = get(next).isEmpty();
-              moves.insert(next);
+              moves.insert(Move(from, next));
               next += d;
 
               if (!wasEmpty)
@@ -243,7 +290,7 @@ namespace games
             while (isValid(next) && (get(next).isEmpty() || (wasEmpty && get(next).color != piece.color)))
             {
               wasEmpty = get(next).isEmpty();
-              moves.insert(next);
+              moves.insert(Move(from, next));
               next += d;
 
               if (!wasEmpty)
@@ -261,9 +308,29 @@ namespace games
               {
                 point_t next = from + point_t(dx, dy);
                 if (isValid(next) && (get(next).isEmpty() || get(next).color != piece.color))
-                  moves.insert(next);
+                  moves.insert(Move(from, next));
               }
             }
+
+          /* castling */
+          if (!piece.hasMoved)
+          {
+            std::array<coord_t, 2> sides = { _board.firstColumn(), _board.lastColumn() };
+            for (coord_t x : sides)
+            {
+              Piece& castle = get({ x, from.y });
+
+              if (!castle.isEmpty() && castle == piece.color && castle.type == Piece::Type::Castle && !castle.hasMoved)
+              {
+                bool allEmpty = true;
+                for (coord_t xx = std::min(x, from.x) + 1; xx < std::max(x, from.x); ++xx)
+                  allEmpty &= get({ xx, from.y }).isEmpty();
+                //TODO: check king won't get mated
+                if (allEmpty)
+                  moves.insert(Move(from, { x == 0 ? from.x - 2 : from.x + 2, from.y }, Move::Type::Castling));
+              }
+            }
+          }
         }
 
         if (piece.type == Piece::Type::Rook)
@@ -278,7 +345,7 @@ namespace games
             point_t next = from + delta;
 
             if (isValid(next) && (get(next).isEmpty() || get(next).color != piece.color))
-              moves.insert(next);
+              moves.insert(Move(from, next));
           }
         }
 
@@ -287,7 +354,7 @@ namespace games
 
       bool canPickupPiece(point_t from) override
       {
-        return isValid(from) && get(from).present;
+        return isValid(from) && get(from).present && get(from).color == _player->color;
       }
     };
   }
@@ -307,37 +374,39 @@ namespace games
 
       bool operator==(Color color) const { return present && this->color == color; }
     };
+
+    using Move = point_t;
     
-    class Game : public BoardGame<Board<8, 8, Piece>>
+    class Game : public BoardGame<Board<8, 8, Piece, Move>>
     {
     public:
 
       void resetBoard() override
       {
-        std::fill(board.begin(), board.end(), Piece());
+        std::fill(_board.begin(), _board.end(), Piece());
 
-        for (coord_t y = 0; y < board.height(); ++y)
+        for (coord_t y = 0; y < _board.height(); ++y)
         {
           if (y == 3 || y == 4)
             continue;
 
           coord_t x = (y == 1 || y == 5 || y == 7) ? 1 : 0;
           
-          for (; x < board.width(); x += 2)
+          for (; x < _board.width(); x += 2)
           {
-            get(point_t(x, y)) = Piece(Piece::Type::Men, y < board.height() / 2 ? Color::White : Color::Black);
+            get(point_t(x, y)) = Piece(Piece::Type::Men, y < _board.height() / 2 ? Color::White : Color::Black);
           }
         }
       }
 
-      MoveResult pieceMoved(const Piece& piece, point_t from, point_t to) override
+      MoveResult pieceMoved(const Piece& piece, const Move& move) override
       {
         return MoveResult();
       }
 
-      MoveSet allowedMoves(const Piece& piece, point_t from) override
+      MoveSet<Move> allowedMoves(const Piece& piece, point_t from) override
       {
-        return MoveSet();
+        return MoveSet<Move>();
       }
 
       bool canPickupPiece(point_t from) override

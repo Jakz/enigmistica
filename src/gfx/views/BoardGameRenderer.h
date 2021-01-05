@@ -8,11 +8,12 @@ namespace ui
   template<typename Game, typename Renderer>
   class BoardGameRenderer : public ui::GameRenderer
   {
-  private:
+  protected:
     Game game;
     Renderer pieceRenderer;
 
     using Board = typename Game::Board;
+    using Move = typename Game::Move;
     using T = typename Game::Piece;
 
     struct
@@ -29,11 +30,13 @@ namespace ui
       T piece;
     } held;
 
-    games::MoveSet availableMoves;
-    games::PlayerMoveSet availableMovesForPlayer;
+    games::MoveSet<Move> availableMoves;
+    games::PlayerMoveSet<Move> availableMovesForPlayer;
 
     point_t margin;
     coord_t cs; // cell size
+    bool flipped = true;
+
 
   public:
     BoardGameRenderer();
@@ -47,14 +50,15 @@ namespace ui
   BoardGameRenderer<T, Renderer>::BoardGameRenderer() : GameRenderer(), margin({ 12, 24 }), cs(24), mouse({ false, { 0,0}, { 0, 0} }), held({ false })
   {
     game.resetBoard();
-    availableMovesForPlayer = game.allowedMoveSetForPlayer({ games::Color::White });
+    availableMovesForPlayer = game.allowedMoveSetForPlayer(game.currentPlayer());
   }
 
   template<typename T, typename Renderer>
   void BoardGameRenderer<T, Renderer>::render(ViewManager* gvm)
   {
-    constexpr auto BW = Board::WIDTH;
-    constexpr auto BH = Board::HEIGHT;
+    const auto boardSize = game.boardSize();
+    const auto BW = boardSize.w;
+    const auto BH = boardSize.h;
 
     gvm->clear({ 255, 255, 255 });
     gvm->grid(margin.x, margin.y, BW, BH, { cs, cs }, { 0, 0, 0 });
@@ -70,21 +74,23 @@ namespace ui
 
     for (auto i = 0; i < BH; ++i)
     {
-      gvm->text(ranks[i], margin.x - 6, margin.y + cs / 2 + (cs * i) - 2, { 180, 180, 180 }, TextAlign::CENTER, 1.0f);
-      gvm->text(ranks[i], margin.x + cs * BW + 7, margin.y + cs / 2 + (cs * i) - 2, { 180, 180, 180 }, TextAlign::CENTER, 1.0f);
+      auto j = flipped ? BH - i - 1 : i;
+      gvm->text(ranks[j], margin.x - 6, margin.y + cs / 2 + (cs * i) - 2, { 180, 180, 180 }, TextAlign::CENTER, 1.0f);
+      gvm->text(ranks[j], margin.x + cs * BW + 7, margin.y + cs / 2 + (cs * i) - 2, { 180, 180, 180 }, TextAlign::CENTER, 1.0f);
     }
 
     for (auto x = 0; x < BW; ++x)
       for (auto y = 0; y < BH; ++y)
       {
-        point_t base = point_t(margin.x + x * cs, margin.y + y * cs);
+        point_t base = point_t(margin.x + x * cs, margin.y + (flipped ? (BH - y - 1) : y) * cs);
         const auto coord = point_t(x, y);
 
         if ((y + x) % 2 == 1)
           gvm->fillRect({ base.x + 1, base.y + 1, cs - 1, cs - 1 }, color_t{ 80, 80, 80 });
 
+        auto it = std::find_if(availableMoves.begin(), availableMoves.end(), [&coord](const Move& move) { return move.endsOn(coord); });
 
-        if (availableMoves.find(coord) != availableMoves.end())
+        if (it != availableMoves.end())
           gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 0, 220, 0 });
         else if (held.present && held.from == coord)
           gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 220, 220, 0 });
@@ -112,9 +118,12 @@ namespace ui
   {
     auto x = (p.x - margin.x) / cs, y = (p.y - margin.y) / cs;
 
-    if (p.x >= margin.x && p.y >= margin.y && x >= 0 && x < Board::WIDTH && y >= 0 && y < Board::HEIGHT)
+    if (p.x >= margin.x && p.y >= margin.y && x >= 0 && x < game.boardSize().w && y >= 0 && y < game.boardSize().h)
     {
-      mouse.cell = { x, y };
+      if (flipped)
+        mouse.cell = { x, game.boardSize().h - y - 1 };
+      else
+        mouse.cell = { x, y };
       mouse.valid = true;
     }
     else
@@ -133,13 +142,15 @@ namespace ui
     {
       if (!held.present)
       {
-
         if (game.canPickupPiece(mouse.cell))
         {
           auto& cell = game.get(mouse.cell);
-          held = { true, mouse.cell, cell };
-          availableMoves = game.allowedMoves(held.piece, held.from);
-          cell = T();
+          availableMoves = game.allowedMoves(cell, mouse.cell);
+          if (!availableMoves.empty())
+          {
+            held = { true, mouse.cell, cell };
+            cell = T();
+          }
         }
       }
       else
@@ -153,11 +164,14 @@ namespace ui
           availableMoves.clear();
 
         }
-        else if (game.pieceMoved(held.piece, held.from, mouse.cell))
+        else if (game.pieceMoved(held.piece, Move(held.from, mouse.cell)))
         {
           held.present = false;
           held.piece = T();
           availableMoves.clear();
+          
+          game.nextTurn();
+          availableMovesForPlayer = game.allowedMoveSetForPlayer(game.currentPlayer());
         }
       }
     }
