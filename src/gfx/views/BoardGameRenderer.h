@@ -38,13 +38,6 @@ namespace ui
       T piece;
     } held;
 
-    struct
-    {
-      bool present;
-      point_t from;
-      T piece;
-    };
-
     games::MoveSet<Move> availableMoves;
     games::PlayerMoveSet<Move> availableMovesForPlayer;
 
@@ -117,7 +110,7 @@ namespace ui
         if (!held.present && availableMovesForPlayer.find(coord) != availableMovesForPlayer.end())
           gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 0, 220, 0 });
 
-        
+
         if (mouseMode && mouse.cell == coord)
           gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 220, 0, 0 });
         if (!mouseMode && gamepad.valid && gamepad.cell == coord)
@@ -146,7 +139,7 @@ namespace ui
   void BoardGameRenderer<T, Renderer>::mouseMoved(point_t p)
   {
     mouseMode = true;
-    
+
     auto x = (p.x - margin.x) / cs, y = (p.y - margin.y) / cs;
 
     if (p.x >= margin.x && p.y >= margin.y && x >= 0 && x < game.boardSize().w && y >= 0 && y < game.boardSize().h)
@@ -229,37 +222,37 @@ namespace ui
   void BoardGameRenderer<T, Renderer>::gamepadButton(GamepadButton button, bool pressed)
   {
     mouseMode = false;
-    
+
     if (!gamepad.valid)
     {
       gamepad.cell = { 0, 0 };
       gamepad.valid = true;
     }
-    
+
     if (pressed)
-    {      
+    {
 
       switch (button)
       {
 
-        case GamepadButton::DpadLeft: 
-          if (gamepad.cell.x > game.board().firstColumn()) 
-            --gamepad.cell.x; 
+        case GamepadButton::DpadLeft:
+          if (gamepad.cell.x > game.board().firstColumn())
+            --gamepad.cell.x;
           break;
-        case GamepadButton::DpadRight: 
-          if (gamepad.cell.x < game.board().lastColumn()) 
-            ++gamepad.cell.x; 
+        case GamepadButton::DpadRight:
+          if (gamepad.cell.x < game.board().lastColumn())
+            ++gamepad.cell.x;
           break;
-        case GamepadButton::DpadUp: 
+        case GamepadButton::DpadUp:
         case GamepadButton::DpadDown:
         {
           bool increasing = button == GamepadButton::DpadDown ^ !flipped;
 
-          if (increasing && gamepad.cell.y > game.board().firstRow()) 
+          if (increasing && gamepad.cell.y > game.board().firstRow())
             --gamepad.cell.y;
-          else if (!increasing && gamepad.cell.y < game.board().lastRow()) 
+          else if (!increasing && gamepad.cell.y < game.board().lastRow())
             ++gamepad.cell.y;
-          
+
           break;
         }
 

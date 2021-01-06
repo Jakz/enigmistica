@@ -69,7 +69,7 @@ namespace games
 
   protected:
     std::vector<Player> _players;
-    decltype(_players)::iterator _player;
+    typename decltype(_players)::iterator _player;
     B _board;
 
   public:
