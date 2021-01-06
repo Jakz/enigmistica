@@ -2,7 +2,9 @@
 #include "gfx/ViewManager.h"
 
 #include "BoardGameRenderer.h"
-#include "games/Chess.h"
+
+#include "games/board/Chess.h"
+#include "games/board/Checkers.h"
 
 using namespace ui;
 
@@ -12,7 +14,7 @@ struct ChessPieceRenderer
 
   ChessPieceRenderer() : pieces(nullptr) { }
 
-  void render(ViewManager* gvm, point_t p, const games::chess::Piece& piece)
+  void render(ViewManager* gvm, point_t p, const games::chess::Piece& piece, bool floating = false)
   {
     if (!pieces)
       pieces = gvm->loadTexture("chess.png");
@@ -38,6 +40,13 @@ struct ChessPieceRenderer
 
     rect.origin.x *= size;
     rect.origin.y *= size;
+
+    if (floating)
+    {
+      rect_t src = { 96, 0, 16, 16 };
+      gvm->blit(pieces, src, p.x - size / 2, p.y - size / 2);
+      p.y -= 6;
+    }
 
     gvm->blit(pieces, rect, p.x - size / 2, p.y - size / 2);
   }

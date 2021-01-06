@@ -5,14 +5,13 @@
 
 namespace ui
 {
-  enum MouseButton { Left, Middle, Right };
-  
   class GameRenderer
   {
   public:
     virtual void render(ViewManager* gvm) = 0;
     virtual void mouseMoved(point_t p) = 0;
     virtual void mouseButton(point_t p, MouseButton button, bool pressed) { }
+    virtual void gamepadButton(GamepadButton button, bool pressed) { }
   };
   
   class MainView : public View
@@ -24,6 +23,8 @@ namespace ui
     MainView(ViewManager* gvm);
 
     void render() override;
+
+    void handleGamepadEvent(GamepadButton button, bool pressed) override;
     void handleKeyboardEvent(const SDL_Event& event) override;
     void handleMouseEvent(const SDL_Event& event) override;
   };
@@ -47,6 +48,7 @@ namespace ui
     void activate(bool full) override;
 
     void render() override;
+    void handleGamepadEvent(GamepadButton button, bool pressed) override { }
     void handleKeyboardEvent(const SDL_Event& event) override;
     void handleMouseEvent(const SDL_Event& event) override;
   };

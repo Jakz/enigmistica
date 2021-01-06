@@ -33,6 +33,12 @@ void MainView::handleKeyboardEvent(const SDL_Event& event)
   }
 }
 
+void MainView::handleGamepadEvent(GamepadButton button, bool pressed)
+{
+  if (renderer)
+    renderer->gamepadButton(button, pressed);
+}
+
 void MainView::handleMouseEvent(const SDL_Event& event)
 {
   if (event.type == SDL_MOUSEMOTION)

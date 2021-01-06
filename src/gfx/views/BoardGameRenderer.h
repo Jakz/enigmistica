@@ -1,7 +1,7 @@
 #include "gfx/MainView.h"
 #include "gfx/ViewManager.h"
 
-#include "games/Chess.h"
+#include "games/board/Board.h"
 
 namespace ui
 {
@@ -16,6 +16,8 @@ namespace ui
     using Move = typename Game::Move;
     using T = typename Game::Piece;
 
+    bool mouseMode = true;
+
     struct
     {
       bool valid;
@@ -25,10 +27,23 @@ namespace ui
 
     struct
     {
+      bool valid;
+      point_t cell;
+    } gamepad;
+
+    struct
+    {
       bool present;
       point_t from;
       T piece;
     } held;
+
+    struct
+    {
+      bool present;
+      point_t from;
+      T piece;
+    };
 
     games::MoveSet<Move> availableMoves;
     games::PlayerMoveSet<Move> availableMovesForPlayer;
@@ -37,6 +52,8 @@ namespace ui
     coord_t cs; // cell size
     bool flipped = true;
 
+    bool tryToPickupPieceAt(point_t coord);
+    bool tryToDropPieceAt(point_t coord);
 
   public:
     BoardGameRenderer();
@@ -44,13 +61,16 @@ namespace ui
     void render(ViewManager* gvm) override;
     void mouseMoved(point_t p) override;
     void mouseButton(point_t p, MouseButton button, bool pressed) override;
+    void gamepadButton(GamepadButton button, bool pressed) override;
   };
 
   template<typename T, typename Renderer>
-  BoardGameRenderer<T, Renderer>::BoardGameRenderer() : GameRenderer(), margin({ 12, 24 }), cs(24), mouse({ false, { 0,0}, { 0, 0} }), held({ false })
+  BoardGameRenderer<T, Renderer>::BoardGameRenderer() : GameRenderer(), margin({ 12, 24 }), cs(24), mouse({ false, { 0,0}, { 0, 0} }), gamepad({ false }), held({ false })
   {
     game.resetBoard();
     availableMovesForPlayer = game.allowedMoveSetForPlayer(game.currentPlayer());
+
+    margin.x = WIDTH / 2 - cs * game.boardSize().w / 2;
   }
 
   template<typename T, typename Renderer>
@@ -98,8 +118,11 @@ namespace ui
           gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 0, 220, 0 });
 
         
-        if (mouse.cell == coord)
+        if (mouseMode && mouse.cell == coord)
           gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 220, 0, 0 });
+        if (!mouseMode && gamepad.valid && gamepad.cell == coord)
+          gvm->drawRect(rect_t(base.x + 1, base.y + 1, cs - 1, cs - 1), color_t{ 220, 0, 0 });
+
 
         const auto& cell = game.get(coord);
 
@@ -109,13 +132,21 @@ namespace ui
 
     if (held.present)
     {
-      pieceRenderer.render(gvm, mouse.position, held.piece);
+      if (mouseMode)
+        pieceRenderer.render(gvm, mouse.position, held.piece);
+      else
+      {
+        point_t base = point_t(margin.x + gamepad.cell.x * cs, margin.y + (flipped ? (BH - gamepad.cell.y - 1) : gamepad.cell.y) * cs);
+        pieceRenderer.render(gvm, base + cs / 2 + point_t(0, -6), held.piece, true);
+      }
     }
   }
 
   template<typename T, typename Renderer>
   void BoardGameRenderer<T, Renderer>::mouseMoved(point_t p)
   {
+    mouseMode = true;
+    
     auto x = (p.x - margin.x) / cs, y = (p.y - margin.y) / cs;
 
     if (p.x >= margin.x && p.y >= margin.y && x >= 0 && x < game.boardSize().w && y >= 0 && y < game.boardSize().h)
@@ -136,44 +167,118 @@ namespace ui
   }
 
   template<typename T, typename Renderer>
+  bool BoardGameRenderer<T, Renderer>::tryToPickupPieceAt(point_t coord)
+  {
+    if (game.canPickupPiece(coord))
+    {
+      auto& cell = game.get(coord);
+      availableMoves = game.allowedMoves(cell, coord);
+      if (!availableMoves.empty())
+      {
+        held = { true, coord, cell };
+        cell = T();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  template<typename T, typename Renderer>
+  bool BoardGameRenderer<T, Renderer>::tryToDropPieceAt(point_t coord)
+  {
+    /* cancel move */
+    if (coord == held.from)
+    {
+      held.present = false;
+      game.get(held.from) = held.piece;
+      held.piece = T();
+      availableMoves.clear();
+      return true;
+    }
+    else if (game.pieceMoved(held.piece, Move(held.from, coord)))
+    {
+      held.present = false;
+      held.piece = T();
+      availableMoves.clear();
+
+      game.nextTurn();
+      availableMovesForPlayer = game.allowedMoveSetForPlayer(game.currentPlayer());
+      return true;
+    }
+
+    return false;
+  }
+
+  template<typename T, typename Renderer>
   void BoardGameRenderer<T, Renderer>::mouseButton(point_t p, MouseButton button, bool pressed)
   {
     if (pressed && button == MouseButton::Left && mouse.valid)
     {
       if (!held.present)
       {
-        if (game.canPickupPiece(mouse.cell))
-        {
-          auto& cell = game.get(mouse.cell);
-          availableMoves = game.allowedMoves(cell, mouse.cell);
-          if (!availableMoves.empty())
-          {
-            held = { true, mouse.cell, cell };
-            cell = T();
-          }
-        }
+        tryToPickupPieceAt(mouse.cell);
       }
       else
       {
-        /* cancel move */
-        if (mouse.cell == held.from)
-        {
-          held.present = false;
-          game.get(held.from) = held.piece;
-          held.piece = T();
-          availableMoves.clear();
+        tryToDropPieceAt(mouse.cell);
+      }
+    }
+  }
 
-        }
-        else if (game.pieceMoved(held.piece, Move(held.from, mouse.cell)))
+  template<typename T, typename Renderer>
+  void BoardGameRenderer<T, Renderer>::gamepadButton(GamepadButton button, bool pressed)
+  {
+    mouseMode = false;
+    
+    if (!gamepad.valid)
+    {
+      gamepad.cell = { 0, 0 };
+      gamepad.valid = true;
+    }
+    
+    if (pressed)
+    {      
+
+      switch (button)
+      {
+
+        case GamepadButton::DpadLeft: 
+          if (gamepad.cell.x > game.board().firstColumn()) 
+            --gamepad.cell.x; 
+          break;
+        case GamepadButton::DpadRight: 
+          if (gamepad.cell.x < game.board().lastColumn()) 
+            ++gamepad.cell.x; 
+          break;
+        case GamepadButton::DpadUp: 
+        case GamepadButton::DpadDown:
         {
-          held.present = false;
-          held.piece = T();
-          availableMoves.clear();
+          bool increasing = button == GamepadButton::DpadDown ^ !flipped;
+
+          if (increasing && gamepad.cell.y > game.board().firstRow()) 
+            --gamepad.cell.y;
+          else if (!increasing && gamepad.cell.y < game.board().lastRow()) 
+            ++gamepad.cell.y;
           
-          game.nextTurn();
-          availableMovesForPlayer = game.allowedMoveSetForPlayer(game.currentPlayer());
+          break;
+        }
+
+        case GamepadButton::A:
+        {
+          if (!held.present)
+            tryToPickupPieceAt(gamepad.cell);
+          else
+            tryToDropPieceAt(gamepad.cell);
+          break;
+        }
+
+        case GamepadButton::B:
+        {
+
+          break;
         }
       }
     }
+
   }
 }

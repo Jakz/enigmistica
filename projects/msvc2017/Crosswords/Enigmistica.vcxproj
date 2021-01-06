@@ -20,7 +20,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\Common.h" />
-    <ClInclude Include="..\..\..\src\games\Chess.h" />
+    <ClInclude Include="..\..\..\src\games\board\Board.h" />
+    <ClInclude Include="..\..\..\src\games\board\Checkers.h" />
+    <ClInclude Include="..\..\..\src\games\board\Chess.h" />
     <ClInclude Include="..\..\..\src\games\Crossword.h" />
     <ClInclude Include="..\..\..\src\gfx\MainView.h" />
     <ClInclude Include="..\..\..\src\gfx\SdlHelper.h" />

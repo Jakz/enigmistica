@@ -182,11 +182,8 @@ void SDL<EventHandler, Renderer>::handleEvents()
       break;
 
     case SDL_KEYDOWN:
-      eventHandler.handleKeyboardEvent(event, true);
-      break;
-
     case SDL_KEYUP:
-      eventHandler.handleKeyboardEvent(event, false);
+      eventHandler.handleKeyboardEvent(event);
       break;
 
 #if MOUSE_ENABLED

@@ -2,6 +2,8 @@
 
 #include "MainView.h"
 
+#define KEYBOARD_MAPPED_TO_GAMEPAD true
+
 using namespace ui;
 
 ui::ViewManager::ViewManager() : SDL<ui::ViewManager, ui::ViewManager>(*this, *this), _font(nullptr),
@@ -38,10 +40,47 @@ SDL_Texture* ui::ViewManager::loadTexture(const std::string& path)
   return texture;
 }
 
-void ui::ViewManager::handleKeyboardEvent(const SDL_Event& event, bool press)
+/*
+#define KEY_LEFT (SDLK_LEFT)
+#define KEY_RIGHT (SDLK_RIGHT)
+#define KEY_UP (SDLK_UP)
+#define KEY_DOWN (SDLK_DOWN)
+#define KEY_X (SDLK_LSHIFT)
+#define KEY_Y (SDLK_SPACE)
+#define KEY_A (SDLK_LCTRL)
+#define KEY_B (SDLK_LALT)
+#define KEY_L (SDLK_TAB)
+#define KEY_R (SDLK_BACKSPACE)
+#define KEY_SELECT (SDLK_ESCAPE)
+#define KEY_START (SDLK_RETURN)
+*/
+
+void ui::ViewManager::handleKeyboardEvent(const SDL_Event& event)
 {
+#if KEYBOARD_MAPPED_TO_GAMEPAD
+  if (!_stack.empty())
+  {
+    GamepadButton button;
+
+    switch (event.key.keysym.sym)
+    {
+      case SDLK_LEFT: button = GamepadButton::DpadLeft; break;
+      case SDLK_RIGHT: button = GamepadButton::DpadRight; break;
+      case SDLK_UP: button = GamepadButton::DpadUp; break;
+      case SDLK_DOWN: button = GamepadButton::DpadDown; break;
+      case SDLK_LCTRL: button = GamepadButton::A; break;
+      case SDLK_LALT: button = GamepadButton::B; break;
+      default:
+        _stack.back()->handleKeyboardEvent(event);
+        return;
+    }
+
+    _stack.back()->handleGamepadEvent(button, event.type == SDL_KEYDOWN);
+  }
+#else
   if (!_stack.empty())
     _stack.back()->handleKeyboardEvent(event);
+#endif
 }
 
 void ui::ViewManager::handleMouseEvent(const SDL_Event& event)

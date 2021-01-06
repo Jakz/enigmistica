@@ -7,6 +7,9 @@
 
 namespace ui
 {
+  enum class MouseButton { Left, Middle, Right };
+  enum class GamepadButton { DpadLeft, DpadRight, DpadUp, DpadDown, A, B, Y, X };
+  
   class ViewManager;
   
   class View
@@ -19,6 +22,7 @@ namespace ui
     virtual void activate(bool full = true) { }
 
     virtual void render() = 0;
+    virtual void handleGamepadEvent(GamepadButton button, bool pressed) = 0;
     virtual void handleKeyboardEvent(const SDL_Event& event) = 0;
     virtual void handleMouseEvent(const SDL_Event& event) = 0;
   };
@@ -51,7 +55,7 @@ namespace ui
 
     bool loadData();
 
-    void handleKeyboardEvent(const SDL_Event& event, bool press);
+    void handleKeyboardEvent(const SDL_Event& event);
     void handleMouseEvent(const SDL_Event& event);
     void render();
 
